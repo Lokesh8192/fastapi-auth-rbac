@@ -1,3 +1,5 @@
+<img width="960" height="540" alt="Screenshot 2026-06-18 183409" src="https://github.com/user-attachments/assets/25dad06b-0681-4645-b946-9751e84d1fca" />
+<img width="960" height="540" alt="Screenshot 2026-06-18 183300" src="https://github.com/user-attachments/assets/54a390b0-4ec7-45ac-b55d-d13885aa087c" />
 # FastAPI Authentication & Authorization System
 
 ## Overview
