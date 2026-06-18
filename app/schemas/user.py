@@ -48,29 +48,31 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class LoginRequest(BaseModel):
-    email:EmailStr
-    password:str
+    email: EmailStr
+    password: str
+
 
 class TokenResponse(BaseModel):
-    access_token:str
-    token_type:str
+    access_token: str
+    token_type: str
+
 
 class LoginUserResponse(BaseModel):
-    id:int
-    username:str
-    email:EmailStr
-    role:str
-    is_active:bool
-    
-    model_config={
-        "from_attributes":True
-    }
+    id: int
+    username: str
+    email: EmailStr
+    role: str
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
 
 class LoginResponse(BaseModel):
-    user:LoginUserResponse
-    access_token:str
-    token:TokenResponse
+    user: LoginUserResponse
+    access_token: str
+    token: TokenResponse
 
 
 class UserListResponse(BaseModel):
@@ -80,3 +82,7 @@ class UserListResponse(BaseModel):
     role: str
 
     model_config = {"from_attributes": True}
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str

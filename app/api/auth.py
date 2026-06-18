@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.dependencies import get_db
-from app.schemas.user import UserCreate, UserResponse,LoginRequest
+from app.schemas.user import UserCreate, UserResponse,LoginRequest,RefreshTokenRequest
 from app.services.user_service import create_user
-from app.services.auth_service import login_user
+from app.services.auth_service import login_user,refresh_access_token,logout_user
 from app.schemas.common import ApiResponse
 from app.dependencies.auth import get_current_user
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(prefix="/auth", tags=["User/Authentication"])
 
 
 @router.post("/register", response_model=ApiResponse, status_code=201)
@@ -29,7 +29,7 @@ def login(login_data:LoginRequest, db:Session=Depends(get_db)):
         message="Login Successful",
         data=result
     )
-    
+
 @router.get("/me")
 def get_me(Current_user:UserResponse=Depends(get_current_user)):
     return ApiResponse(
@@ -37,3 +37,20 @@ def get_me(Current_user:UserResponse=Depends(get_current_user)):
         message="Current User Retrieved Successfully",
         data=UserResponse.model_validate(Current_user)
     )
+
+@router.post("refresh")
+def refresh_token(request:RefreshTokenRequest,db:Session=Depends(get_db)):
+    result=refresh_access_token(db=db,refresh_token=request.refresh_token)
+    return{
+        "Success":True,
+        "message":"Access refreshed successfully",
+        "data":result
+    }
+
+
+@router.post("/logout")
+def logout(request: RefreshTokenRequest, db: Session = Depends(get_db)):
+
+    result = logout_user(db=db, refresh_token=request.refresh_token)
+
+    return {"success": True, "message": result["message"]}

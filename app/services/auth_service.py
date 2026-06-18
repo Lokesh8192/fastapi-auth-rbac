@@ -10,9 +10,10 @@ from app.schemas.user import LoginRequest
 
 from app.utils.security import verify_password
 
-from app.core.auth import create_access_token, create_refresh_token
+from app.core.auth import create_access_token, create_refresh_token, decode_access_token
 
 from app.core.config import settings
+from jose import JWTError
 
 
 def login_user(db: Session, login_data: LoginRequest):
@@ -72,3 +73,42 @@ def login_user(db: Session, login_data: LoginRequest):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
+
+def refresh_access_token(db: Session, refresh_token: str):
+    payload = decode_access_token(refresh_token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    token_type = payload.get("type")
+    if token_type != "refresh":
+        raise HTTPException(status_code=401, detail="Invali token type")
+    db_token = (
+        db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
+    )
+
+    if not db_token:
+        raise HTTPException(status_code=401, detail="Refresh token not found")
+
+    user = db.query(User).filter(User.id == db_token.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    access_token = create_access_token(
+        {"sub": str(user.id), "email": user.email, "role": user.role}
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+def logout_user(db: Session, refresh_token: str):
+
+    token = db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
+
+    if not token:
+        raise HTTPException(status_code=404, detail="Refresh token not found")
+
+    db.delete(token)
+
+    db.commit()
+
+    return {"message": "Logout successful"}
