@@ -38,7 +38,7 @@ def get_me(Current_user:UserResponse=Depends(get_current_user)):
         data=UserResponse.model_validate(Current_user)
     )
 
-@router.post("refresh")
+@router.post("/refresh")
 def refresh_token(request:RefreshTokenRequest,db:Session=Depends(get_db)):
     result=refresh_access_token(db=db,refresh_token=request.refresh_token)
     return{
