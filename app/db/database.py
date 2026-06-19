@@ -4,7 +4,7 @@ from app.core.config import settings
 from app.db.base import Base
 
 # Engine and session
-engine = create_engine(settings.DATABSE_URL, echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=True)
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 

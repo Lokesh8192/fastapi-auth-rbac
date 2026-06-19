@@ -13,6 +13,8 @@ class User(Base):
 
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
+    phone_number: Mapped[str | None] = mapped_column(nullable=True)
+
     hashed_password: Mapped[str] = mapped_column(nullable=False)
 
     role: Mapped[str] = mapped_column(String(20), default="user")
