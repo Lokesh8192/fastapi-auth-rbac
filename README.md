@@ -107,6 +107,46 @@ PostgreSQL is used as the primary database and SQLAlchemy ORM is used for data m
 * CI/CD Pipeline
 * Cloud Deployment
 
+## Testing
+
+Implemented automated API testing using **Pytest** and **FastAPI TestClient**.
+
+### Tested Features
+
+* User Registration
+* User Login
+* JWT Authentication
+* Protected Routes (`/auth/me`)
+* Refresh Token Generation
+* Logout Functionality
+* Role-Based Access Control (RBAC)
+
+### Security Testing
+
+* Access without Token
+* Invalid Access Token
+* Invalid Refresh Token
+* Refresh Token after Logout
+* Unauthorized Admin Access
+
+### Testing Stack
+
+* Pytest
+* FastAPI TestClient
+
+### Test Coverage
+
+* Authentication Testing
+* Authorization Testing
+* Integration Testing
+* Security Testing
+
+### Run Tests
+
+```bash
+pytest -v
+```
+
 ## Author
 
 Lokeswara Reddy
