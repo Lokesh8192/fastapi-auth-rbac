@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+from app.db.database import SessionLocal
+from app.models.user import User
 from tests.conftest import client
 
 
@@ -271,3 +273,94 @@ def test_refresh_after_logout():
     print(refresh_response.json())
 
     assert refresh_response.status_code == 401
+
+
+def test_admin_can_access_users():
+
+    suffix = uuid4().hex[:8]
+    email = f"admin_{suffix}@example.com"
+    password = "Admin@123"
+
+    # Register user and promote to admin in DB
+    register_response = client.post(
+        "/auth/register",
+        json={
+            "username": f"admin_{suffix}",
+            "email": email,
+            "password": password,
+            "confirm_password": password,
+        },
+    )
+    assert register_response.status_code == 201
+
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == email).first()
+        assert user is not None
+        user.role = "admin"
+        db.commit()
+    finally:
+        db.close()
+
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": email,
+            "password": password,
+        },
+    )
+
+    assert login_response.status_code == 200
+
+    token = login_response.json()["data"]["access_token"]
+
+    response = client.get(
+        "/admin/users",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    print("\nAdmin Access:")
+    print(response.json())
+
+    assert response.status_code == 200
+
+
+def test_user_cannot_access_admin_endpoint():
+
+    suffix = uuid4().hex[:8]
+
+    email = f"user_{suffix}@example.com"
+    password = "Admin@123"
+
+    # Register Normal User
+    client.post(
+        "/auth/register",
+        json={
+            "username": f"user_{suffix}",
+            "email": email,
+            "password": password,
+            "confirm_password": password,
+        },
+    )
+
+    # Login
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": email,
+            "password": password,
+        },
+    )
+
+    token = login_response.json()["data"]["access_token"]
+
+    # Try Admin Endpoint
+    response = client.get(
+        "/admin/users",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    print("\nUser Access:")
+    print(response.json())
+
+    assert response.status_code == 403
