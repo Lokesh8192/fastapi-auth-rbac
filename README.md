@@ -1,10 +1,8 @@
-<img width="960" height="540" alt="Screenshot 2026-06-18 183409" src="https://github.com/user-attachments/assets/25dad06b-0681-4645-b946-9751e84d1fca" />
-<img width="960" height="540" alt="Screenshot 2026-06-18 183300" src="https://github.com/user-attachments/assets/54a390b0-4ec7-45ac-b55d-d13885aa087c" />
 # FastAPI Authentication & Authorization System
 
 ## Overview
 
-A secure Authentication and Authorization system built using FastAPI and PostgreSQL. The project implements JWT-based authentication, refresh token management, Role-Based Access Control (RBAC), database migrations, and automated testing following a layered architecture approach.
+A secure Authentication and Authorization system built using FastAPI and PostgreSQL. The project implements JWT-based authentication, refresh token management, Role-Based Access Control (RBAC), database migrations, exception handling, pagination, search & filtering, and automated testing following a layered architecture approach.
 
 ---
 
@@ -34,6 +32,21 @@ A secure Authentication and Authorization system built using FastAPI and Postgre
 * SQLAlchemy ORM
 * Alembic Database Migrations
 * Database Session Management
+
+### API Features
+
+* Pagination
+* Search Users by Username
+* Filter Users by Role
+* Filter Users by Active Status
+* Professional API Response Metadata
+
+### Exception Handling
+
+* Custom Exception Handling
+* Global Exception Handling
+* Standardized Error Responses
+* Centralized Error Management
 
 ### Testing
 
@@ -88,26 +101,34 @@ app/
 ├── api/
 │   ├── auth.py
 │   └── admin.py
+│
 ├── core/
 │   ├── auth.py
 │   ├── config.py
-│   └── security.py
+│   ├── exceptions.py
+│   └── exception_handler.py
+│
 ├── db/
 │   ├── database.py
 │   ├── dependencies.py
 │   └── base.py
+│
 ├── dependencies/
 │   └── auth.py
+│
 ├── models/
 │   ├── user.py
 │   └── refresh_token.py
+│
 ├── schemas/
 │   ├── user.py
 │   └── common.py
+│
 ├── services/
-│   ├── user_service.py
-│   └── auth_service.py
-├── main.py
+│   ├── auth_service.py
+│   └── user_service.py
+│
+└── main.py
 
 tests/
 ├── conftest.py
@@ -171,6 +192,86 @@ Allow / Deny Access
 
 ---
 
+## Pagination Flow
+
+```text
+Request
+   ↓
+page + size
+   ↓
+Calculate Offset
+   ↓
+Fetch Records
+   ↓
+Return Paginated Response
+```
+
+### Pagination Parameters
+
+| Parameter | Description         |
+| --------- | ------------------- |
+| page      | Current Page Number |
+| size      | Records Per Page    |
+
+### Sample Response
+
+```json
+{
+  "success": true,
+  "page": 1,
+  "size": 5,
+  "total": 15,
+  "total_pages": 3,
+  "data": []
+}
+```
+
+---
+
+## Search & Filtering
+
+### Search Users
+
+```http
+GET /admin/users?search=lokesh
+```
+
+### Filter By Role
+
+```http
+GET /admin/users?role=admin
+```
+
+### Filter By Active Status
+
+```http
+GET /admin/users?is_active=true
+```
+
+### Combined Query
+
+```http
+GET /admin/users?search=lokesh&role=admin&page=1&size=5
+```
+
+### Search & Filter Flow
+
+```text
+Request
+   ↓
+Search Filter
+   ↓
+Role Filter
+   ↓
+Active Filter
+   ↓
+Pagination
+   ↓
+Response
+```
+
+---
+
 ## API Endpoints
 
 ### Authentication
@@ -185,9 +286,9 @@ Allow / Deny Access
 
 ### Admin
 
-| Method | Endpoint     | Description                |
-| ------ | ------------ | -------------------------- |
-| GET    | /admin/users | Get All Users (Admin Only) |
+| Method | Endpoint     | Description                                    |
+| ------ | ------------ | ---------------------------------------------- |
+| GET    | /admin/users | Users List with Pagination, Search & Filtering |
 
 ---
 
@@ -213,94 +314,6 @@ user_id
 token
 expires_at
 ```
-
----
-
-## Testing
-
-### Testing Stack
-
-* Pytest
-* FastAPI TestClient
-* pytest-cov
-
-### Implemented Tests
-
-* User Registration
-* User Login
-* JWT Authentication
-* Protected Routes
-* Refresh Token Flow
-* Logout Functionality
-* RBAC Authorization
-
-### Test Infrastructure
-
-* Dedicated Test Database
-* Dependency Override
-* Fixtures
-* Fixture Chaining
-* Yield Fixtures
-* Automatic Cleanup
-
-### Run Tests
-
-```bash
-pytest -v
-```
-
-### Run Coverage
-
-```bash
-pytest --cov
-```
-
-Current Coverage:
-
-```text
-79%
-```
-
----
-
-## Concepts Implemented
-
-```text
-Backend Development
-├── FastAPI
-├── PostgreSQL
-├── SQLAlchemy
-├── Pydantic
-├── JWT Authentication
-├── Refresh Tokens
-├── RBAC
-├── Alembic Migrations
-├── Dependency Injection
-├── API Security
-├── Git & GitHub
-└── Pytest Testing
-
-Testing
-├── Fixtures
-├── Fixture Chaining
-├── Test Database
-├── Dependency Override
-├── Yield Fixtures
-├── Automatic Cleanup
-└── Coverage Reports
-```
-
----
-
-## Future Enhancements
-
-* Custom Exception Handlers
-* Pagination
-* Search & Filtering
-* Logging
-* Docker
-* CI/CD Pipeline
-* Cloud Deployment
 
 ---
 
@@ -343,10 +356,111 @@ Implemented centralized exception handling for consistent API responses.
 * Improved Maintainability
 * Cleaner Service Layer Code
 
-```
+---
+
+## Testing
+
+### Testing Stack
+
+* Pytest
+* FastAPI TestClient
+* pytest-cov
+
+### Implemented Tests
+
+* User Registration
+* User Login
+* JWT Authentication
+* Protected Routes
+* Refresh Token Flow
+* Logout Functionality
+* RBAC Authorization
+
+### Test Infrastructure
+
+* Dedicated Test Database
+* Dependency Override
+* Fixtures
+* Fixture Chaining
+* Yield Fixtures
+* Automatic Cleanup
+
+### Run Tests
+
+```bash
+pytest -v
 ```
 
+### Run Coverage
+
+```bash
+pytest --cov
+```
+
+### Current Coverage
+
+```text
+79%
+```
+
+---
+
+## Concepts Implemented
+
+```text
+Backend Development
+├── FastAPI
+├── PostgreSQL
+├── SQLAlchemy
+├── Pydantic
+├── JWT Authentication
+├── Refresh Tokens
+├── RBAC
+├── Dependency Injection
+├── Alembic Migrations
+├── API Security
+├── Pagination
+├── Search & Filtering
+├── Exception Handling
+├── Global Exception Handling
+├── Git & GitHub
+└── Pytest Testing
+
+Testing
+├── Fixtures
+├── Fixture Chaining
+├── Test Database
+├── Dependency Override
+├── Yield Fixtures
+├── Automatic Cleanup
+└── Coverage Reports
+```
+
+---
+
+## Future Enhancements
+
+* Logging
+* Docker Containerization
+* Redis Caching
+* Background Tasks
+* CI/CD Pipeline
+* Cloud Deployment (AWS/Azure)
+* API Rate Limiting
+* Email Verification
+* Password Reset Functionality
+
+---
+
 ## Author
-**M.Lokeswara Reddy**
+
+**M. Lokeswara Reddy**
+
 Python Backend Developer
-Lokeswara Reddy
+
+* FastAPI
+* PostgreSQL
+* SQLAlchemy
+* JWT Authentication
+* Backend API Development
+* Automated Testing

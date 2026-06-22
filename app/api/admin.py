@@ -13,9 +13,19 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 def get_all_users(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1, le=100),
+    search: str | None = None,
+    role: str | None = None,
+    is_active: bool | None = None,
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
 ):
+    query = db.query(User)
+    if search:
+        query = query.filter(User.username.ilike(f"%{search}%"))
+    if role:
+        query = query.filter(User.role == role)
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
 
     total_users = db.query(User).count()
     total_pages = math.ceil(total_users / size) if total_users > 0 else 1
@@ -33,6 +43,11 @@ def get_all_users(
         "size": size,
         "total": total_users,
         "total_pages": total_pages,
+        "filters": {
+            "search": search,
+            "role": role,
+            "is_active": is_active,
+        },
         "data": [
             {
                 "id": user.id,
