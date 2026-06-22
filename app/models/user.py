@@ -1,6 +1,8 @@
-from sqlalchemy import String, Boolean, DateTime
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
-from datetime import datetime
+
 from app.db.base import Base
 
 
@@ -21,4 +23,7 @@ class User(Base):
 
     is_active: Mapped[bool] = mapped_column(default=True)
 
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+    )

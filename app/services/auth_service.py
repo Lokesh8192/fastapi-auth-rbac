@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -14,7 +14,6 @@ from app.utils.security import verify_password
 from app.core.auth import create_access_token, create_refresh_token, decode_access_token
 
 from app.core.config import settings
-from jose import JWTError
 
 
 def login_user(db: Session, login_data: LoginRequest):
@@ -47,7 +46,7 @@ def login_user(db: Session, login_data: LoginRequest):
             token=refresh_token,
             user_id=user.id,
             expires_at=(
-                datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+                datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
             ),
         )
 

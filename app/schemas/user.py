@@ -80,8 +80,18 @@ class UserListResponse(BaseModel):
     username: str
     email: EmailStr
     role: str
+    is_active: bool
 
     model_config = {"from_attributes": True}
+
+
+class PaginatedUserListResponse(BaseModel):
+    success: bool
+    page: int
+    size: int
+    total: int
+    total_pages: int
+    data: list[UserListResponse]
 
 
 class RefreshTokenRequest(BaseModel):

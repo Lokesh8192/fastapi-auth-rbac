@@ -1,9 +1,10 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from starlette.routing import Router
+
 from app.api.auth import router as auth_router
 from app.api.admin import router as admin_router
 from app.db.database import init_db
-from app.models.refresh_token import RefreshToken
 from app.core.exceptions import InvalidCredentialsException, RefreshTokenNotFoundException, UserNotFoundException
 from app.core.exception_handler import (
     invalid_credentials_handler,
@@ -12,13 +13,19 @@ from app.core.exception_handler import (
 )
 from app.core.exception_handler import global_exception_handler
 
-app = FastAPI(title="FastAPI Authentication and RBAC", version="1.0.0")
 
-
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     # Ensure DB tables exist (development convenience).
     init_db()
+    yield
+
+
+app = FastAPI(
+    title="FastAPI Authentication and RBAC",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 
 app.include_router(auth_router)
