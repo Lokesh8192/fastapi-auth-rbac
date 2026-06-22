@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import InvalidCredentialsException, RefreshTokenNotFoundException, UserNotFoundException
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
 
@@ -22,11 +23,10 @@ def login_user(db: Session, login_data: LoginRequest):
     user = db.query(User).filter(User.email == login_data.email).first()
 
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
+        raise UserNotFoundException()
     # Verify password
     if not verify_password(login_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise InvalidCredentialsException()
 
     # Generate Access Token
     access_token = create_access_token(
@@ -83,16 +83,16 @@ def refresh_access_token(db: Session, refresh_token: str):
     if token_type != "refresh":
         raise HTTPException(status_code=401, detail="Invali token type")
     db_token = (
-        db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
+        db.query(RefreshToken).filter(
+            RefreshToken.token == refresh_token).first()
     )
 
     if not db_token:
-        raise HTTPException(status_code=401, detail="Refresh token not found")
-
+        raise RefreshTokenNotFoundException()
     user = db.query(User).filter(User.id == db_token.user_id).first()
 
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise UserNotFoundException()
     access_token = create_access_token(
         {"sub": str(user.id), "email": user.email, "role": user.role}
     )
@@ -102,10 +102,11 @@ def refresh_access_token(db: Session, refresh_token: str):
 
 def logout_user(db: Session, refresh_token: str):
 
-    token = db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
+    token = db.query(RefreshToken).filter(
+        RefreshToken.token == refresh_token).first()
 
     if not token:
-        raise HTTPException(status_code=404, detail="Refresh token not found")
+        raise RefreshTokenNotFoundException()
 
     db.delete(token)
 

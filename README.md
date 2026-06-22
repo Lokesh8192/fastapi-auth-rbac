@@ -304,6 +304,48 @@ Testing
 
 ---
 
+## Exception Handling
+
+Implemented centralized exception handling for consistent API responses.
+
+### Custom Exceptions
+
+* UserNotFoundException
+* InvalidCredentialsException
+* RefreshTokenNotFoundException
+
+### Exception Handlers
+
+* Custom exception handlers for business logic errors
+* Standardized error response structure
+* Improved frontend integration
+
+### Global Exception Handler
+
+* Handles unexpected runtime errors
+* Prevents exposing internal server details
+* Returns consistent JSON responses
+
+### Error Response Format
+
+```json
+{
+  "success": false,
+  "message": "User not found"
+}
+```
+
+### Benefits
+
+* Centralized Error Management
+* Consistent API Responses
+* Better Security
+* Improved Maintainability
+* Cleaner Service Layer Code
+
+```
+```
+
 ## Author
 **M.Lokeswara Reddy**
 Python Backend Developer
