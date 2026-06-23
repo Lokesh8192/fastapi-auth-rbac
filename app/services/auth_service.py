@@ -14,19 +14,25 @@ from app.utils.security import verify_password
 from app.core.auth import create_access_token, create_refresh_token, decode_access_token
 
 from app.core.config import settings
+from app.core.logger import logger
 
 
 def login_user(db: Session, login_data: LoginRequest):
 
+    logger.info(f"Login attempt: {login_data.email}")
     # Find user by email
     user = db.query(User).filter(User.email == login_data.email).first()
 
     if not user:
+        logger.warning(f"User not found:{login_data.email}")
         raise UserNotFoundException()
+
     # Verify password
     if not verify_password(login_data.password, user.hashed_password):
+        logger.warning(f"Invalid password attempt:{login_data.email}")
         raise InvalidCredentialsException()
 
+    logger.info(f"Login successful:{user.email}")
     # Generate Access Token
     access_token = create_access_token(
         {"sub": str(user.id), "email": user.email, "role": user.role}
@@ -46,15 +52,18 @@ def login_user(db: Session, login_data: LoginRequest):
             token=refresh_token,
             user_id=user.id,
             expires_at=(
-                datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+                datetime.now(UTC) +
+                timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
             ),
         )
 
         db.add(refresh_record)
 
         db.commit()
+        logger.info(f"Refresh token generated for user:{user.email}")
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Database error during login:{str(e)}")
 
         db.rollback()
 
@@ -74,41 +83,120 @@ def login_user(db: Session, login_data: LoginRequest):
     }
 
 
-def refresh_access_token(db: Session, refresh_token: str):
-    payload = decode_access_token(refresh_token)
+def refresh_access_token(
+    db: Session,
+    refresh_token: str,
+):
+
+    logger.info(
+        "Refresh token request received"
+    )
+
+    payload = decode_access_token(
+        refresh_token
+    )
+
     if not payload:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        logger.warning(
+            "Invalid refresh token"
+        )
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid refresh token",
+        )
+
     token_type = payload.get("type")
+
     if token_type != "refresh":
-        raise HTTPException(status_code=401, detail="Invali token type")
+        logger.warning(
+            "Invalid token type"
+        )
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token type",
+        )
+
     db_token = (
-        db.query(RefreshToken).filter(
-            RefreshToken.token == refresh_token).first()
+        db.query(RefreshToken)
+        .filter(
+            RefreshToken.token
+            == refresh_token
+        )
+        .first()
     )
 
     if not db_token:
+        logger.warning(
+            "Refresh token not found"
+        )
         raise RefreshTokenNotFoundException()
-    user = db.query(User).filter(User.id == db_token.user_id).first()
 
-    if not user:
-        raise UserNotFoundException()
-    access_token = create_access_token(
-        {"sub": str(user.id), "email": user.email, "role": user.role}
+    user = (
+        db.query(User)
+        .filter(User.id == db_token.user_id)
+        .first()
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    if not user:
+        logger.warning(
+            f"User not found for refresh token"
+        )
+        raise UserNotFoundException()
+
+    access_token = create_access_token(
+        {
+            "sub": str(user.id),
+            "email": user.email,
+            "role": user.role,
+        }
+    )
+
+    logger.info(
+        f"Access token refreshed for user: {user.email}"
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
 
 
-def logout_user(db: Session, refresh_token: str):
+def logout_user(
+    db: Session,
+    refresh_token: str,
+):
 
-    token = db.query(RefreshToken).filter(
-        RefreshToken.token == refresh_token).first()
+    logger.info(
+        "Logout request received"
+    )
+
+    token = (
+        db.query(RefreshToken)
+        .filter(
+            RefreshToken.token
+            == refresh_token
+        )
+        .first()
+    )
 
     if not token:
+
+        logger.warning(
+            "Refresh token not found during logout"
+        )
+
         raise RefreshTokenNotFoundException()
+
+    user_id = token.user_id
 
     db.delete(token)
 
     db.commit()
 
-    return {"message": "Logout successful"}
+    logger.info(
+        f"User logged out successfully. User ID: {user_id}"
+    )
+
+    return {
+        "message": "Logout successful"
+    }
