@@ -437,6 +437,57 @@ Testing
 ```
 
 ---
+Logging
+
+Implemented application logging for monitoring, debugging, and troubleshooting.
+
+Logging Features
+INFO Logs for successful operations
+WARNING Logs for invalid requests and unexpected situations
+ERROR Logs for application and database errors
+Request Tracking
+Authentication Activity Logging
+Logout Activity Logging
+Refresh Token Activity Logging
+Logging Levels
+DEBUG     → Detailed debugging information
+INFO      → Successful application events
+WARNING   → Unexpected situations
+ERROR     → Application errors
+CRITICAL  → Critical system failures
+Logging Examples
+2026-06-23 17:00:01 - INFO - Login successful: lokesh@example.com
+
+2026-06-23 17:05:22 - WARNING - Invalid password attempt: lokesh@example.com
+
+2026-06-23 17:10:44 - ERROR - Database error during login
+Logging Benefits
+Easier Debugging
+Application Monitoring
+Error Tracking
+Audit Trail
+Production Support
+Update Concepts Implemented
+
+Add Logging section:
+
+Backend Development
+├── FastAPI
+├── PostgreSQL
+├── SQLAlchemy
+├── Pydantic
+├── JWT Authentication
+├── Refresh Tokens
+├── RBAC
+├── Dependency Injection
+├── Alembic Migrations
+├── API Security
+├── Pagination
+├── Search & Filtering
+├── Exception Handling
+├── Logging
+├── Git & GitHub
+└── Pytest Testing
 
 ## Future Enhancements
 
