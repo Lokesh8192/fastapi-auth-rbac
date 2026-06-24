@@ -503,6 +503,31 @@ Backend Development
 
 ---
 
+Docker Support
+Dockerized Application
+├── FastAPI Container
+├── PostgreSQL Container
+├── Docker Compose
+├── Docker Networking
+└── Environment Variables
+Docker Commands
+docker compose build
+docker compose up
+docker compose up -d
+docker compose down
+docker ps
+docker logs fastapi_app
+Docker Architecture
+Docker Network
+│
+├── FastAPI Container
+│     │
+│     └── SQLAlchemy
+│
+└── PostgreSQL Container
+
+--------
+
 ## Author
 
 **M. Lokeswara Reddy**
