@@ -222,6 +222,99 @@ The application logs authentication and token events, including:
 - Logout events
 - Database errors during authentication workflows
 
+Architecture
+## Project Architecture
+
+The project follows a layered architecture with clear separation of concerns.
+
+```text
+Client
+   │
+   ▼
+FastAPI Router
+   │
+   ▼
+Service Layer
+   │
+   ▼
+Repository Layer
+   │
+   ▼
+SQLAlchemy ORM
+   │
+   ▼
+PostgreSQL
+```
+
+### Responsibilities
+
+- **Router**: Handles HTTP requests and responses.
+- **Service Layer**: Contains business logic, authentication, authorization, validation, and logging.
+- **Repository Layer**: Handles all database queries and CRUD operations.
+- **Database**: PostgreSQL with SQLAlchemy ORM.
+Repository Pattern
+## Repository Pattern
+
+The project implements the Repository Pattern to separate database access from business logic.
+
+### User Repository
+
+- Get User by Email
+- Get User by Username
+- Get User by ID
+- Create User
+- Search & Filter Users
+
+### Refresh Token Repository
+
+- Create Refresh Token
+- Get Refresh Token
+- Delete Refresh Token
+- Delete Existing User Tokens
+
+### Benefits
+
+- Cleaner Services
+- Reusable Queries
+- Better Maintainability
+- Easier Testing
+- Production-ready Architecture
+CI/CD Improvements
+## CI/CD Pipeline
+
+GitHub Actions automatically performs:
+
+```text
+Git Push
+    │
+    ▼
+GitHub Actions
+    │
+    ▼
+Start PostgreSQL Service
+    │
+    ▼
+Inject Environment Variables
+    │
+    ▼
+Run Alembic Migrations
+    │
+    ▼
+Execute Pytest
+    │
+    ▼
+Generate Test Results
+```
+
+### CI Features
+
+- Automated Testing
+- PostgreSQL Service
+- Alembic Database Migrations
+- GitHub Secrets
+- GitHub Runner
+- Environment Variable Injection
+
 ## Author
 
 **M. Lokeswara Reddy**
