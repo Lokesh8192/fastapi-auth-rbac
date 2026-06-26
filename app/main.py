@@ -2,15 +2,19 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.auth import router as auth_router
 from app.api.admin import router as admin_router
-from app.core.exceptions import InvalidCredentialsException, RefreshTokenNotFoundException, UserNotFoundException
+from app.api.auth import router as auth_router
+from app.core.exception_handler import global_exception_handler
 from app.core.exception_handler import (
     invalid_credentials_handler,
     refresh_token_not_found_handler,
     user_not_found_handler,
 )
-from app.core.exception_handler import global_exception_handler
+from app.core.exceptions import (
+    InvalidCredentialsException,
+    RefreshTokenNotFoundException,
+    UserNotFoundException,
+)
 
 
 @asynccontextmanager
@@ -48,8 +52,3 @@ app.add_exception_handler(
 @app.get("/", response_model=dict)
 def home():
     return {"message": "Welcome to FastAPI Authentication and RBAC"}
-
-
-@app.get("/error")
-def test_error():
-    return 10 / 0

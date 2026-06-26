@@ -1,542 +1,229 @@
-# FastAPI Authentication & Authorization System
+# FastAPI Authentication and RBAC
 
-## Overview
-
-A secure Authentication and Authorization system built using FastAPI and PostgreSQL. The project implements JWT-based authentication, refresh token management, Role-Based Access Control (RBAC), database migrations, exception handling, pagination, search & filtering, and automated testing following a layered architecture approach.
-
----
+A production-oriented FastAPI backend that provides user authentication, refresh-token sessions, role-based access control, PostgreSQL persistence, Alembic migrations, Docker support, and automated tests.
 
 ## Features
 
-### Authentication
-
-* User Registration with Validation
-* Secure Password Hashing using bcrypt
-* User Login Authentication
-* JWT Access Token Generation
-* Refresh Token Management
-* Logout Functionality
-* Protected API Endpoints
-* Current User Endpoint (`/auth/me`)
-
-### Authorization
-
-* Role-Based Access Control (RBAC)
-* Admin-only API Access
-* Current User Authentication
-* Route Protection using Dependencies
-
-### Database
-
-* PostgreSQL Integration
-* SQLAlchemy ORM
-* Alembic Database Migrations
-* Database Session Management
-
-### API Features
-
-* Pagination
-* Search Users by Username
-* Filter Users by Role
-* Filter Users by Active Status
-* Professional API Response Metadata
-
-### Exception Handling
-
-* Custom Exception Handling
-* Global Exception Handling
-* Standardized Error Responses
-* Centralized Error Management
-
-### Testing
-
-* Automated API Testing using Pytest
-* FastAPI TestClient
-* Test Database Setup
-* Dependency Override for Testing
-* Reusable Fixtures
-* Automatic Database Cleanup
-* Coverage Reporting
-
----
+- User registration with password confirmation and validation
+- Secure password hashing with bcrypt
+- JWT access tokens and refresh-token management
+- Logout by refresh-token invalidation
+- Protected current-user endpoint
+- Admin-only user listing with pagination, search, and filters
+- SQLAlchemy ORM models and Alembic migrations
+- Centralized exception handling and consistent API responses
+- Application logging for authentication and database events
+- Pytest-based API tests with database cleanup fixtures
+- Docker and Docker Compose support
 
 ## Tech Stack
 
-### Backend
-
-* FastAPI
-* PostgreSQL
-* SQLAlchemy
-* Pydantic
-
-### Authentication & Security
-
-* JWT (python-jose)
-* Passlib (bcrypt)
-* RBAC
-
-### Database Management
-
-* Alembic Migrations
-
-### Testing
-
-* Pytest
-* FastAPI TestClient
-* pytest-cov
-
-### Tools
-
-* Git
-* GitHub
-* pgAdmin
-* VS Code
-
----
+- FastAPI
+- PostgreSQL
+- SQLAlchemy
+- Alembic
+- Pydantic
+- python-jose
+- Passlib and bcrypt
+- Pytest
+- Docker
 
 ## Project Structure
 
 ```text
 app/
-├── api/
-│   ├── auth.py
-│   └── admin.py
-│
-├── core/
-│   ├── auth.py
-│   ├── config.py
-│   ├── exceptions.py
-│   └── exception_handler.py
-│
-├── db/
-│   ├── database.py
-│   ├── dependencies.py
-│   └── base.py
-│
-├── dependencies/
-│   └── auth.py
-│
-├── models/
-│   ├── user.py
-│   └── refresh_token.py
-│
-├── schemas/
-│   ├── user.py
-│   └── common.py
-│
-├── services/
-│   ├── auth_service.py
-│   └── user_service.py
-│
-└── main.py
-
-tests/
-├── conftest.py
-├── test_auth.py
-└── test_database.py
+|-- api/
+|   |-- admin.py
+|   `-- auth.py
+|-- core/
+|   |-- auth.py
+|   |-- config.py
+|   |-- exception_handler.py
+|   |-- exceptions.py
+|   `-- logger.py
+|-- db/
+|   |-- base.py
+|   |-- database.py
+|   `-- dependencies.py
+|-- dependencies/
+|   `-- auth.py
+|-- models/
+|   |-- refresh_token.py
+|   `-- user.py
+|-- schemas/
+|   |-- common.py
+|   `-- user.py
+|-- services/
+|   |-- auth_service.py
+|   `-- user_service.py
+|-- utils/
+|   `-- security.py
+`-- main.py
 
 alembic/
+|-- versions/
+|-- env.py
+`-- script.py.mako
+
+tests/
+|-- conftest.py
+|-- test_auth.py
+`-- test_database.py
 ```
-
----
-
-## Authentication Flow
-
-```text
-Register
-   ↓
-Password Hashing
-   ↓
-Store User
-   ↓
-Login
-   ↓
-Generate Access Token
-   ↓
-Generate Refresh Token
-   ↓
-Access Protected Routes
-```
-
----
-
-## Refresh Token Flow
-
-```text
-Login
-   ↓
-Access Token + Refresh Token
-   ↓
-Access Token Expires
-   ↓
-Refresh Endpoint
-   ↓
-Generate New Access Token
-```
-
----
-
-## RBAC Flow
-
-```text
-User Login
-    ↓
-JWT Validation
-    ↓
-Get Current User
-    ↓
-Role Verification
-    ↓
-Allow / Deny Access
-```
-
----
-
-## Pagination Flow
-
-```text
-Request
-   ↓
-page + size
-   ↓
-Calculate Offset
-   ↓
-Fetch Records
-   ↓
-Return Paginated Response
-```
-
-### Pagination Parameters
-
-| Parameter | Description         |
-| --------- | ------------------- |
-| page      | Current Page Number |
-| size      | Records Per Page    |
-
-### Sample Response
-
-```json
-{
-  "success": true,
-  "page": 1,
-  "size": 5,
-  "total": 15,
-  "total_pages": 3,
-  "data": []
-}
-```
-
----
-
-## Search & Filtering
-
-### Search Users
-
-```http
-GET /admin/users?search=lokesh
-```
-
-### Filter By Role
-
-```http
-GET /admin/users?role=admin
-```
-
-### Filter By Active Status
-
-```http
-GET /admin/users?is_active=true
-```
-
-### Combined Query
-
-```http
-GET /admin/users?search=lokesh&role=admin&page=1&size=5
-```
-
-### Search & Filter Flow
-
-```text
-Request
-   ↓
-Search Filter
-   ↓
-Role Filter
-   ↓
-Active Filter
-   ↓
-Pagination
-   ↓
-Response
-```
-
----
 
 ## API Endpoints
 
 ### Authentication
 
-| Method | Endpoint       | Description          |
-| ------ | -------------- | -------------------- |
-| POST   | /auth/register | Register User        |
-| POST   | /auth/login    | Login User           |
-| GET    | /auth/me       | Current User         |
-| POST   | /auth/refresh  | Refresh Access Token |
-| POST   | /auth/logout   | Logout User          |
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/auth/register` | Register a new user |
+| `POST` | `/auth/login` | Authenticate and issue tokens |
+| `GET` | `/auth/me` | Return the authenticated user |
+| `POST` | `/auth/refresh` | Issue a new access token |
+| `POST` | `/auth/logout` | Revoke a refresh token |
 
 ### Admin
 
-| Method | Endpoint     | Description                                    |
-| ------ | ------------ | ---------------------------------------------- |
-| GET    | /admin/users | Users List with Pagination, Search & Filtering |
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/admin/users` | List users with pagination, search, and filters |
 
----
+Admin query parameters:
 
-## Database Schema
+| Parameter | Description |
+| --- | --- |
+| `page` | Page number, starting at `1` |
+| `size` | Page size, from `1` to `100` |
+| `search` | Optional username search |
+| `role` | Optional role filter |
+| `is_active` | Optional active-status filter |
 
-### Users
+Example:
 
-```text
-id
-username
-email
-hashed_password
-role
-is_active
-created_at
+```http
+GET /admin/users?search=lokesh&role=admin&is_active=true&page=1&size=10
 ```
 
-### Refresh Tokens
+## Response Format
 
-```text
-id
-user_id
-token
-expires_at
-```
-
----
-
-## Exception Handling
-
-Implemented centralized exception handling for consistent API responses.
-
-### Custom Exceptions
-
-* UserNotFoundException
-* InvalidCredentialsException
-* RefreshTokenNotFoundException
-
-### Exception Handlers
-
-* Custom exception handlers for business logic errors
-* Standardized error response structure
-* Improved frontend integration
-
-### Global Exception Handler
-
-* Handles unexpected runtime errors
-* Prevents exposing internal server details
-* Returns consistent JSON responses
-
-### Error Response Format
+Standard API responses use the following shape:
 
 ```json
 {
-  "success": false,
-  "message": "User not found"
+  "success": true,
+  "message": "Login Successful",
+  "data": {}
 }
 ```
 
-### Benefits
+Paginated admin responses include pagination metadata:
 
-* Centralized Error Management
-* Consistent API Responses
-* Better Security
-* Improved Maintainability
-* Cleaner Service Layer Code
+```json
+{
+  "success": true,
+  "page": 1,
+  "size": 10,
+  "total": 25,
+  "total_pages": 3,
+  "filters": {
+    "search": null,
+    "role": "admin",
+    "is_active": true
+  },
+  "data": []
+}
+```
 
----
+## Authentication Flow
+
+```text
+Register -> Hash Password -> Store User
+Login -> Verify Password -> Issue Access Token and Refresh Token
+Protected Request -> Validate JWT -> Load Current User -> Allow or Deny
+Refresh -> Validate Refresh Token -> Issue New Access Token
+Logout -> Delete Refresh Token
+```
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/fastapi_auth_rbac
+TEST_DATABASE_URL=postgresql://postgres:password@localhost:5432/fastapi_auth_rbac_test
+SECRET_KEY=change-this-secret
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+```
+
+## Local Setup
+
+1. Create and activate a virtual environment.
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Run migrations:
+
+```bash
+alembic upgrade head
+```
+
+4. Start the API:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The API will be available at `http://127.0.0.1:8000`.
+
+## Docker
+
+Build and run the application stack:
+
+```bash
+docker compose up --build
+```
+
+Common Docker commands:
+
+```bash
+docker compose up -d
+docker compose down
+docker ps
+docker logs fastapi_app
+```
 
 ## Testing
 
-### Testing Stack
-
-* Pytest
-* FastAPI TestClient
-* pytest-cov
-
-### Implemented Tests
-
-* User Registration
-* User Login
-* JWT Authentication
-* Protected Routes
-* Refresh Token Flow
-* Logout Functionality
-* RBAC Authorization
-
-### Test Infrastructure
-
-* Dedicated Test Database
-* Dependency Override
-* Fixtures
-* Fixture Chaining
-* Yield Fixtures
-* Automatic Cleanup
-
-### Run Tests
+Run the test suite:
 
 ```bash
 pytest -v
 ```
 
-### Run Coverage
+Run coverage:
 
 ```bash
-pytest --cov
+pytest --cov=app
 ```
 
-### Current Coverage
+## Logging
 
-```text
-79%
-```
+The application logs authentication and token events, including:
 
----
-
-## Concepts Implemented
-
-```text
-Backend Development
-├── FastAPI
-├── PostgreSQL
-├── SQLAlchemy
-├── Pydantic
-├── JWT Authentication
-├── Refresh Tokens
-├── RBAC
-├── Dependency Injection
-├── Alembic Migrations
-├── API Security
-├── Pagination
-├── Search & Filtering
-├── Exception Handling
-├── Global Exception Handling
-├── Git & GitHub
-└── Pytest Testing
-
-Testing
-├── Fixtures
-├── Fixture Chaining
-├── Test Database
-├── Dependency Override
-├── Yield Fixtures
-├── Automatic Cleanup
-└── Coverage Reports
-```
-
----
-Logging
-
-Implemented application logging for monitoring, debugging, and troubleshooting.
-
-Logging Features
-INFO Logs for successful operations
-WARNING Logs for invalid requests and unexpected situations
-ERROR Logs for application and database errors
-Request Tracking
-Authentication Activity Logging
-Logout Activity Logging
-Refresh Token Activity Logging
-Logging Levels
-DEBUG     → Detailed debugging information
-INFO      → Successful application events
-WARNING   → Unexpected situations
-ERROR     → Application errors
-CRITICAL  → Critical system failures
-Logging Examples
-2026-06-23 17:00:01 - INFO - Login successful: lokesh@example.com
-
-2026-06-23 17:05:22 - WARNING - Invalid password attempt: lokesh@example.com
-
-2026-06-23 17:10:44 - ERROR - Database error during login
-Logging Benefits
-Easier Debugging
-Application Monitoring
-Error Tracking
-Audit Trail
-Production Support
-Update Concepts Implemented
-
-Add Logging section:
-
-Backend Development
-├── FastAPI
-├── PostgreSQL
-├── SQLAlchemy
-├── Pydantic
-├── JWT Authentication
-├── Refresh Tokens
-├── RBAC
-├── Dependency Injection
-├── Alembic Migrations
-├── API Security
-├── Pagination
-├── Search & Filtering
-├── Exception Handling
-├── Logging
-├── Git & GitHub
-└── Pytest Testing
-
-## Future Enhancements
-
-* Logging
-* Docker Containerization
-* Redis Caching
-* Background Tasks
-* CI/CD Pipeline
-* Cloud Deployment (AWS/Azure)
-* API Rate Limiting
-* Email Verification
-* Password Reset Functionality
-
----
-
-Docker Support
-Dockerized Application
-├── FastAPI Container
-├── PostgreSQL Container
-├── Docker Compose
-├── Docker Networking
-└── Environment Variables
-Docker Commands
-docker compose build
-docker compose up
-docker compose up -d
-docker compose down
-docker ps
-docker logs fastapi_app
-Docker Architecture
-Docker Network
-│
-├── FastAPI Container
-│     │
-│     └── SQLAlchemy
-│
-└── PostgreSQL Container
-
---------
+- Login attempts and successful logins
+- Invalid password attempts
+- Refresh-token generation and validation
+- Logout events
+- Database errors during authentication workflows
 
 ## Author
 
 **M. Lokeswara Reddy**
 
 Python Backend Developer
-
-* FastAPI
-* PostgreSQL
-* SQLAlchemy
-* JWT Authentication
-* Backend API Development
-* Automated Testing

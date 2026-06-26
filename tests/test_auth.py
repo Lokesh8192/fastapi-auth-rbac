@@ -1,376 +1,85 @@
-from uuid import uuid4
-
-from app.db.database import SessionLocal
 from app.models.user import User
 from tests.conftest import client
+from tests.test_database import TestingSessionLocal
 
 
 def test_register(test_user):
-
-    print(test_user)
-    response = client.post(
-        "/auth/register",
-        json=test_user,
-    )
+    response = client.post("/auth/register", json=test_user)
 
     assert response.status_code == 201
 
 
 def test_registered_user_fixture(registered_user):
-
     assert registered_user["email"] is not None
 
 
 def test_logged_in_user_fixture(logged_in_user):
-
     assert "access_token" in logged_in_user
     assert "refresh_token" in logged_in_user
 
 
 def test_auth_headers_fixture(auth_headers):
-
     assert "Authorization" in auth_headers
 
 
-# def test_login():
-#     suffix = uuid4().hex[:8]
-
-#     email = f"login_{suffix}@example.com"
-#     password = "Admin@123"
-
-#     # Register user
-#     client.post(
-#         "/auth/register",
-#         json={
-#             "username": f"user_{suffix}",
-#             "email": email,
-#             "password": password,
-#             "confirm_password": password,
-#         },
-#     )
-
-#     # Login user
-#     response = client.post(
-#         "/auth/login",
-#         json={
-#             "email": email,
-#             "password": password,
-#         },
-#     )
-
-#     print(response.json())
-
-#     assert response.status_code == 200
-
-
-# def test_me():
-#     suffix = uuid4().hex[:8]
-
-#     email = f"me_{suffix}@example.com"
-#     password = "Admin@123"
-
-#     # Register User
-#     client.post(
-#         "/auth/register",
-#         json={
-#             "username": f"user_{suffix}",
-#             "email": email,
-#             "password": password,
-#             "confirm_password": password,
-#         },
-#     )
-
-#     # Login User
-#     login_response = client.post(
-#         "/auth/login",
-#         json={
-#             "email": email,
-#             "password": password,
-#         },
-#     )
-
-#     assert login_response.status_code == 200
-
-#     token = login_response.json()["data"]["access_token"]
-
-#     # Call Protected Route
-#     response = client.get(
-#         "/auth/me",
-#         headers={"Authorization": f"Bearer {token}"},
-#     )
-
-#     print("\n/me Response:")
-#     print(response.json())
-
-#     assert response.status_code == 200
-
-#     data = response.json()["data"]
-
-#     assert data["email"] == email
-#     assert data["username"] == f"user_{suffix}"
-
-
-# def test_me_without_token():
-
-#     response = client.get("/auth/me")
-
-#     print(response.json())
-
-#     assert response.status_code == 401
-
-
-# def test_me_invalid_token():
-
-#     response = client.get(
-#         "/auth/me",
-#         headers={"Authorization": "Bearer invalid_token"},
-#     )
-
-#     print(response.json())
-
-#     assert response.status_code == 401
-
-
-# def test_refresh_token():
-
-#     suffix = uuid4().hex[:8]
-
-#     email = f"refresh_{suffix}@example.com"
-#     password = "Admin@123"
-
-#     # Register User
-#     register_response = client.post(
-#         "/auth/register",
-#         json={
-#             "username": f"user_{suffix}",
-#             "email": email,
-#             "password": password,
-#             "confirm_password": password,
-#         },
-#     )
-
-#     assert register_response.status_code == 201
-
-#     # Login User
-#     login_response = client.post(
-#         "/auth/login",
-#         json={
-#             "email": email,
-#             "password": password,
-#         },
-#     )
-
-#     assert login_response.status_code == 200
-
-#     # Extract Refresh Token
-#     refresh_token = login_response.json()["data"]["refresh_token"]
-
-#     # Generate New Access Token
-#     response = client.post(
-#         "/auth/refresh",
-#         json={"refresh_token": refresh_token},
-#     )
-
-#     print("\nRefresh Response:")
-#     print(response.json())
-
-#     assert response.status_code == 200
-
-#     data = response.json()["data"]
-
-#     assert "access_token" in data
-#     assert data["token_type"] == "bearer"
-
-
-# def test_refresh_invalid_token():
-
-#     response = client.post(
-#         "/auth/refresh",
-#         json={"refresh_token": "invalid_token"},
-#     )
-
-#     print("\nInvalid Refresh Token Response:")
-#     print(response.json())
-
-#     assert response.status_code == 401
-
-
-# def test_logout():
-
-#     suffix = uuid4().hex[:8]
-
-#     email = f"logout_{suffix}@example.com"
-#     password = "Admin@123"
-
-#     # Register
-#     client.post(
-#         "/auth/register",
-#         json={
-#             "username": f"user_{suffix}",
-#             "email": email,
-#             "password": password,
-#             "confirm_password": password,
-#         },
-#     )
-
-#     # Login
-#     login_response = client.post(
-#         "/auth/login",
-#         json={
-#             "email": email,
-#             "password": password,
-#         },
-#     )
-
-#     refresh_token = login_response.json()["data"]["refresh_token"]
-
-#     # Logout
-#     response = client.post(
-#         "/auth/logout",
-#         json={"refresh_token": refresh_token},
-#     )
-
-#     print("\nLogout Response:")
-#     print(response.json())
-
-#     assert response.status_code == 200
-
-
-# def test_refresh_after_logout():
-
-#     suffix = uuid4().hex[:8]
-
-#     email = f"logout_refresh_{suffix}@example.com"
-#     password = "Admin@123"
-
-#     # Register
-#     client.post(
-#         "/auth/register",
-#         json={
-#             "username": f"user_{suffix}",
-#             "email": email,
-#             "password": password,
-#             "confirm_password": password,
-#         },
-#     )
-
-#     # Login
-#     login_response = client.post(
-#         "/auth/login",
-#         json={
-#             "email": email,
-#             "password": password,
-#         },
-#     )
-
-#     refresh_token = login_response.json()["data"]["refresh_token"]
-
-#     # Logout
-#     logout_response = client.post(
-#         "/auth/logout",
-#         json={"refresh_token": refresh_token},
-#     )
-
-#     assert logout_response.status_code == 200
-
-#     # Try Refresh Again
-#     refresh_response = client.post(
-#         "/auth/refresh",
-#         json={"refresh_token": refresh_token},
-#     )
-
-#     print("\nRefresh After Logout:")
-#     print(refresh_response.json())
-
-#     assert refresh_response.status_code == 401
-
-
-# def test_admin_can_access_users():
-
-#     suffix = uuid4().hex[:8]
-#     email = f"admin_{suffix}@example.com"
-#     password = "Admin@123"
-
-#     # Register user and promote to admin in DB
-#     register_response = client.post(
-#         "/auth/register",
-#         json={
-#             "username": f"admin_{suffix}",
-#             "email": email,
-#             "password": password,
-#             "confirm_password": password,
-#         },
-#     )
-#     assert register_response.status_code == 201
-
-#     db = SessionLocal()
-#     try:
-#         user = db.query(User).filter(User.email == email).first()
-#         assert user is not None
-#         user.role = "admin"
-#         db.commit()
-#     finally:
-#         db.close()
-
-#     login_response = client.post(
-#         "/auth/login",
-#         json={
-#             "email": email,
-#             "password": password,
-#         },
-#     )
-
-#     assert login_response.status_code == 200
-
-#     token = login_response.json()["data"]["access_token"]
-
-#     response = client.get(
-#         "/admin/users",
-#         headers={"Authorization": f"Bearer {token}"},
-#     )
-
-#     print("\nAdmin Access:")
-#     print(response.json())
-
-#     assert response.status_code == 200
-
-
-# def test_user_cannot_access_admin_endpoint():
-
-#     suffix = uuid4().hex[:8]
-
-#     email = f"user_{suffix}@example.com"
-#     password = "Admin@123"
-
-#     # Register Normal User
-#     client.post(
-#         "/auth/register",
-#         json={
-#             "username": f"user_{suffix}",
-#             "email": email,
-#             "password": password,
-#             "confirm_password": password,
-#         },
-#     )
-
-#     # Login
-#     login_response = client.post(
-#         "/auth/login",
-#         json={
-#             "email": email,
-#             "password": password,
-#         },
-#     )
-
-#     token = login_response.json()["data"]["access_token"]
-
-#     # Try Admin Endpoint
-#     response = client.get(
-#         "/admin/users",
-#         headers={"Authorization": f"Bearer {token}"},
-#     )
-
-#     print("\nUser Access:")
-#     print(response.json())
-
-#     assert response.status_code == 403
+def test_get_current_user(auth_headers, registered_user):
+    response = client.get("/auth/me", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json()["data"]["email"] == registered_user["email"]
+
+
+def test_refresh_token(logged_in_user):
+    response = client.post(
+        "/auth/refresh",
+        json={"refresh_token": logged_in_user["refresh_token"]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    assert "access_token" in response.json()["data"]
+
+
+def test_logout(logged_in_user):
+    response = client.post(
+        "/auth/logout",
+        json={"refresh_token": logged_in_user["refresh_token"]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+
+def test_regular_user_cannot_access_admin_endpoint(auth_headers):
+    response = client.get("/admin/users", headers=auth_headers)
+
+    assert response.status_code == 403
+
+
+def test_admin_users_respects_filters(registered_user):
+    db = TestingSessionLocal()
+    try:
+        user = db.query(User).filter(User.email == registered_user["email"]).first()
+        user.role = "admin"
+        db.commit()
+    finally:
+        db.close()
+
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": registered_user["email"],
+            "password": registered_user["password"],
+        },
+    )
+    token = login_response.json()["data"]["access_token"]
+
+    response = client.get(
+        "/admin/users?role=admin&page=1&size=10",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert response.json()["filters"]["role"] == "admin"
+    assert response.json()["data"][0]["email"] == registered_user["email"]

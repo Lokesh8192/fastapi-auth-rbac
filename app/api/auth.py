@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.db.dependencies import get_db
-from app.schemas.user import UserCreate, UserResponse, LoginRequest, RefreshTokenRequest
-from app.services.user_service import create_user
-from app.services.auth_service import login_user, refresh_access_token, logout_user
-from app.schemas.common import ApiResponse
+
 from app.dependencies.auth import get_current_user
+from app.db.dependencies import get_db
+from app.schemas.common import ApiResponse
+from app.schemas.user import LoginRequest, RefreshTokenRequest, UserCreate, UserResponse
+from app.services.auth_service import login_user, logout_user, refresh_access_token
+from app.services.user_service import create_user
 
 router = APIRouter(prefix="/auth", tags=["User/Authentication"])
 
@@ -29,23 +30,25 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/me")
-def get_me(Current_user: UserResponse = Depends(get_current_user)):
+def get_me(current_user: UserResponse = Depends(get_current_user)):
     return ApiResponse(
         success=True,
         message="Current User Retrieved Successfully",
-        data=UserResponse.model_validate(Current_user),
+        data=UserResponse.model_validate(current_user),
     )
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=ApiResponse)
 def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_db)):
     result = refresh_access_token(db=db, refresh_token=request.refresh_token)
-    return {"Success": True, "message": "Access refreshed successfully", "data": result}
+    return ApiResponse(
+        success=True,
+        message="Access refreshed successfully",
+        data=result,
+    )
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=ApiResponse)
 def logout(request: RefreshTokenRequest, db: Session = Depends(get_db)):
-
     result = logout_user(db=db, refresh_token=request.refresh_token)
-
-    return {"success": True, "message": result["message"]}
+    return ApiResponse(success=True, message=result["message"])

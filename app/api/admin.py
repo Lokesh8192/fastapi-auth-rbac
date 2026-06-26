@@ -1,10 +1,12 @@
+import math
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.db.dependencies import get_db
+
 from app.dependencies.auth import get_current_admin
+from app.db.dependencies import get_db
 from app.models.user import User
-from app.schemas.user import PaginatedUserListResponse
-import math
+from app.schemas.user import PaginatedUserListResponse, UserFilters, UserListResponse
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -20,6 +22,7 @@ def get_all_users(
     current_admin: User = Depends(get_current_admin),
 ):
     query = db.query(User)
+
     if search:
         query = query.filter(User.username.ilike(f"%{search}%"))
     if role:
@@ -27,7 +30,7 @@ def get_all_users(
     if is_active is not None:
         query = query.filter(User.is_active == is_active)
 
-    total_users = db.query(User).count()
+    total_users = query.count()
     total_pages = math.ceil(total_users / size) if total_users > 0 else 1
 
     if page > total_pages:
@@ -35,27 +38,14 @@ def get_all_users(
 
     offset = (page - 1) * size
 
-    users = db.query(User).offset(offset).limit(size).all()
+    users = query.offset(offset).limit(size).all()
 
-    return {
-        "success": True,
-        "page": page,
-        "size": size,
-        "total": total_users,
-        "total_pages": total_pages,
-        "filters": {
-            "search": search,
-            "role": role,
-            "is_active": is_active,
-        },
-        "data": [
-            {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "role": user.role,
-                "is_active": user.is_active,
-            }
-            for user in users
-        ],
-    }
+    return PaginatedUserListResponse(
+        success=True,
+        page=page,
+        size=size,
+        total=total_users,
+        total_pages=total_pages,
+        filters=UserFilters(search=search, role=role, is_active=is_active),
+        data=[UserListResponse.model_validate(user) for user in users],
+    )

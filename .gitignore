@@ -5,3 +5,7 @@ __pycache__/
 .idea/
 .vscode/
 .pytest_cache/
+.coverage
+htmlcov/
+pytest_output.txt
+*.log

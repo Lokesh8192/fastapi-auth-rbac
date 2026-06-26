@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, field_validator, Field, model_validator
 import re
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 class UserCreate(BaseModel):
@@ -85,12 +86,19 @@ class UserListResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserFilters(BaseModel):
+    search: str | None = None
+    role: str | None = None
+    is_active: bool | None = None
+
+
 class PaginatedUserListResponse(BaseModel):
     success: bool
     page: int
     size: int
     total: int
     total_pages: int
+    filters: UserFilters
     data: list[UserListResponse]
 
 
