@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.dependencies.auth import get_current_admin
 from app.db.dependencies import get_db
 from app.models.user import User
+from app.repositories.user_repository import get_users
 from app.schemas.user import PaginatedUserListResponse, UserFilters, UserListResponse
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -21,14 +22,7 @@ def get_all_users(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin),
 ):
-    query = db.query(User)
-
-    if search:
-        query = query.filter(User.username.ilike(f"%{search}%"))
-    if role:
-        query = query.filter(User.role == role)
-    if is_active is not None:
-        query = query.filter(User.is_active == is_active)
+    query = get_users(db, search=search, role=role, is_active=is_active)
 
     total_users = query.count()
     total_pages = math.ceil(total_users / size) if total_users > 0 else 1

@@ -6,6 +6,7 @@ from app.core.auth import decode_access_token
 from app.core.exceptions import UserNotFoundException
 from app.db.dependencies import get_db
 from app.models.user import User
+from app.repositories.user_repository import get_user_by_id
 
 security = HTTPBearer()
 
@@ -22,7 +23,7 @@ def get_current_user(
 
     user_id = payload.get("sub")
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = get_user_by_id(db, int(user_id))
 
     if not user:
         raise UserNotFoundException()
