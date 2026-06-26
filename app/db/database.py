@@ -7,12 +7,3 @@ from app.db.base import Base
 engine = create_engine(settings.DATABASE_URL, echo=True)
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-
-
-def init_db() -> None:
-	"""Create database tables from SQLAlchemy models.
-
-	This is a convenience for local development when migrations
-	aren't applied. Prefer using Alembic migrations in production.
-	"""
-	Base.metadata.create_all(bind=engine)

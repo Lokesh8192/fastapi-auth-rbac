@@ -4,7 +4,6 @@ from fastapi import FastAPI
 
 from app.api.auth import router as auth_router
 from app.api.admin import router as admin_router
-from app.db.database import init_db
 from app.core.exceptions import InvalidCredentialsException, RefreshTokenNotFoundException, UserNotFoundException
 from app.core.exception_handler import (
     invalid_credentials_handler,
@@ -16,8 +15,6 @@ from app.core.exception_handler import global_exception_handler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure DB tables exist (development convenience).
-    init_db()
     yield
 
 
