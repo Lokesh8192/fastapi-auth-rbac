@@ -187,21 +187,6 @@ PostgreSQL
 - **Repositories** isolate user and refresh-token database queries.
 - **Models and schemas** define persistence entities and validated API contracts.
 
-## Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-DATABASE_URL=postgresql://postgres:password@localhost:5432/fastapi_auth_rbac
-TEST_DATABASE_URL=postgresql://postgres:password@localhost:5432/fastapi_auth_rbac_test
-SECRET_KEY=change-this-secret
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
-```
-
-Use a strong, private `SECRET_KEY` outside local development. The test database is cleaned after each test, so `TEST_DATABASE_URL` must point to a dedicated database and never to production data.
-
 ## Local Setup
 
 1. Create and activate a virtual environment.
