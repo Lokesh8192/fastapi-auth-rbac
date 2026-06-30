@@ -1,32 +1,38 @@
 # FastAPI Authentication and RBAC
 
-A production-oriented FastAPI backend that provides user authentication, refresh-token sessions, role-based access control, PostgreSQL persistence, Alembic migrations, Docker support, and automated tests.
+A production-oriented FastAPI backend for user authentication, refresh-token sessions, role-based access control (RBAC), PostgreSQL persistence, Alembic migrations, and automated API testing.
 
-## Features
+## Topics Covered
 
-- User registration with password confirmation and validation
-- Secure password hashing with bcrypt
-- JWT access tokens and refresh-token management
-- Logout by refresh-token invalidation
-- Protected current-user endpoint
-- Admin-only user listing with pagination, search, and filters
-- SQLAlchemy ORM models and Alembic migrations
-- Centralized exception handling and consistent API responses
-- Application logging for authentication and database events
-- Pytest-based API tests with database cleanup fixtures
+- User registration with username/email uniqueness checks
+- Password confirmation and strong-password validation
+- Secure password hashing with Passlib and bcrypt
+- JWT access tokens and database-backed refresh tokens
+- Refresh-token replacement on login, access-token renewal, and logout revocation
+- Bearer-token authentication for protected endpoints
+- Role-based authorization for admin-only operations
+- Paginated user listing with username search, role filtering, and active-status filtering
+- SQLAlchemy 2.0 ORM models and repository pattern
+- Service-layer business logic and dependency injection
+- Pydantic request validation and response schemas
+- Centralized custom exceptions and application logging
+- PostgreSQL schema migrations with Alembic
+- Pytest fixtures, dependency overrides, test-database cleanup, and API integration tests
+- GitHub Actions CI with PostgreSQL and migration execution
 - Docker and Docker Compose support
 
 ## Tech Stack
 
 - FastAPI
 - PostgreSQL
-- SQLAlchemy
+- SQLAlchemy 2.0
 - Alembic
-- Pydantic
+- Pydantic 2
 - python-jose
 - Passlib and bcrypt
-- Pytest
+- Pytest and pytest-cov
 - Docker
+- GitHub Actions
 
 ## Project Structure
 
@@ -50,6 +56,9 @@ app/
 |-- models/
 |   |-- refresh_token.py
 |   `-- user.py
+|-- repositories/
+|   |-- refresh_token_repository.py
+|   `-- user_repository.py
 |-- schemas/
 |   |-- common.py
 |   `-- user.py
@@ -67,6 +76,7 @@ alembic/
 
 tests/
 |-- conftest.py
+|-- test_admin.py
 |-- test_auth.py
 `-- test_database.py
 ```
@@ -75,39 +85,40 @@ tests/
 
 ### Authentication
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `POST` | `/auth/register` | Register a new user |
-| `POST` | `/auth/login` | Authenticate and issue tokens |
-| `GET` | `/auth/me` | Return the authenticated user |
-| `POST` | `/auth/refresh` | Issue a new access token |
-| `POST` | `/auth/logout` | Revoke a refresh token |
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/auth/register` | Public | Register a user with the default `user` role |
+| `POST` | `/auth/login` | Public | Authenticate and issue access and refresh tokens |
+| `GET` | `/auth/me` | Bearer token | Return the authenticated user |
+| `POST` | `/auth/refresh` | Refresh token | Issue a new access token |
+| `POST` | `/auth/logout` | Refresh token | Revoke the stored refresh token |
 
 ### Admin
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/admin/users` | List users with pagination, search, and filters |
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| `GET` | `/admin/users` | Admin bearer token | List users with pagination, search, and filters |
 
 Admin query parameters:
 
 | Parameter | Description |
 | --- | --- |
-| `page` | Page number, starting at `1` |
-| `size` | Page size, from `1` to `100` |
-| `search` | Optional username search |
-| `role` | Optional role filter |
+| `page` | Page number starting at `1` (default: `1`) |
+| `size` | Page size from `1` to `100` (default: `10`) |
+| `search` | Optional case-insensitive partial username search |
+| `role` | Optional exact role filter |
 | `is_active` | Optional active-status filter |
 
 Example:
 
 ```http
 GET /admin/users?search=lokesh&role=admin&is_active=true&page=1&size=10
+Authorization: Bearer <access-token>
 ```
 
 ## Response Format
 
-Standard API responses use the following shape:
+Standard API responses use this shape:
 
 ```json
 {
@@ -117,7 +128,7 @@ Standard API responses use the following shape:
 }
 ```
 
-Paginated admin responses include pagination metadata:
+Paginated admin responses include paging information and the applied filters:
 
 ```json
 {
@@ -135,15 +146,46 @@ Paginated admin responses include pagination metadata:
 }
 ```
 
+Requests for a page beyond the available range return `404 Page not found`. Authenticated non-admin users receive `403 Admin access required` from admin endpoints.
+
 ## Authentication Flow
 
 ```text
-Register -> Hash Password -> Store User
-Login -> Verify Password -> Issue Access Token and Refresh Token
-Protected Request -> Validate JWT -> Load Current User -> Allow or Deny
-Refresh -> Validate Refresh Token -> Issue New Access Token
-Logout -> Delete Refresh Token
+Register -> Validate input -> Hash password -> Store user
+Login -> Verify password -> Replace stored session -> Issue access and refresh tokens
+Protected request -> Decode JWT -> Load user -> Allow or deny by role
+Refresh -> Validate JWT type and stored token -> Issue a new access token
+Logout -> Delete the stored refresh token
 ```
+
+## Architecture
+
+The application uses a layered design:
+
+```text
+Client
+  |
+  v
+FastAPI router and dependencies
+  |
+  v
+Service layer
+  |
+  v
+Repository layer
+  |
+  v
+SQLAlchemy ORM
+  |
+  v
+PostgreSQL
+```
+
+- **Routers** handle HTTP input and output.
+- **Dependencies** provide database sessions, authenticated users, and admin authorization.
+- **Services** contain registration, login, refresh, and logout business logic.
+- **Repositories** isolate user and refresh-token database queries.
+- **Models and schemas** define persistence entities and validated API contracts.
 
 ## Environment Variables
 
@@ -158,6 +200,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
 
+Use a strong, private `SECRET_KEY` outside local development. The test database is cleaned after each test, so `TEST_DATABASE_URL` must point to a dedicated database and never to production data.
+
 ## Local Setup
 
 1. Create and activate a virtual environment.
@@ -167,29 +211,82 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 pip install -r requirements.txt
 ```
 
-3. Run migrations:
+3. Create the application and test PostgreSQL databases and configure `.env`.
+4. Run migrations:
 
 ```bash
 alembic upgrade head
 ```
 
-4. Start the API:
+5. Start the API:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API will be available at `http://127.0.0.1:8000`.
+The API is available at `http://127.0.0.1:8000`. Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/docs`.
+
+## Testing
+
+The test suite uses FastAPI's `TestClient` with a database dependency override. Fixtures create unique users, perform registration and login, build bearer headers, and truncate the `users` and `refresh_tokens` tables after each test.
+
+Current automated coverage includes:
+
+| Area | Scenarios |
+| --- | --- |
+| Registration | Successful API registration and reusable registered-user fixture |
+| Login | Access-token and refresh-token issuance |
+| Authentication | Bearer header construction and `/auth/me` current-user lookup |
+| Token lifecycle | Successful access-token refresh and logout requests |
+| RBAC | Regular-user denial (`403`) and successful admin access |
+| User listing | Default pagination fields and response structure |
+| Pagination errors | Out-of-range page returns `404` |
+| Search and filters | Username search, role filtering, and returned filter metadata |
+| Test isolation | Dedicated PostgreSQL session and table cleanup after every test |
+
+Run the full test suite:
+
+```bash
+pytest -v
+```
+
+Run tests with coverage:
+
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
+Run only authentication or admin tests:
+
+```bash
+pytest -v tests/test_auth.py
+pytest -v tests/test_admin.py
+```
+
+## Logging
+
+The application logs authentication and token events, including login attempts, successful logins, invalid credentials, refresh-token generation and validation, logout, and authentication-related database failures.
+
+## CI/CD Pipeline
+
+GitHub Actions runs on pushes and pull requests to `main`:
+
+```text
+Checkout -> Set up Python -> Install dependencies -> Start PostgreSQL
+         -> Run Alembic migrations -> Execute Pytest
+```
+
+The workflow uses a PostgreSQL 17 service and injects database and authentication settings through environment variables and GitHub secrets.
 
 ## Docker
 
-Build and run the application stack:
+Build and start the application stack:
 
 ```bash
 docker compose up --build
 ```
 
-Common Docker commands:
+Common commands:
 
 ```bash
 docker compose up -d
@@ -197,123 +294,6 @@ docker compose down
 docker ps
 docker logs fastapi_app
 ```
-
-## Testing
-
-Run the test suite:
-
-```bash
-pytest -v
-```
-
-Run coverage:
-
-```bash
-pytest --cov=app
-```
-
-## Logging
-
-The application logs authentication and token events, including:
-
-- Login attempts and successful logins
-- Invalid password attempts
-- Refresh-token generation and validation
-- Logout events
-- Database errors during authentication workflows
-
-Architecture
-## Project Architecture
-
-The project follows a layered architecture with clear separation of concerns.
-
-```text
-Client
-   │
-   ▼
-FastAPI Router
-   │
-   ▼
-Service Layer
-   │
-   ▼
-Repository Layer
-   │
-   ▼
-SQLAlchemy ORM
-   │
-   ▼
-PostgreSQL
-```
-
-### Responsibilities
-
-- **Router**: Handles HTTP requests and responses.
-- **Service Layer**: Contains business logic, authentication, authorization, validation, and logging.
-- **Repository Layer**: Handles all database queries and CRUD operations.
-- **Database**: PostgreSQL with SQLAlchemy ORM.
-Repository Pattern
-## Repository Pattern
-
-The project implements the Repository Pattern to separate database access from business logic.
-
-### User Repository
-
-- Get User by Email
-- Get User by Username
-- Get User by ID
-- Create User
-- Search & Filter Users
-
-### Refresh Token Repository
-
-- Create Refresh Token
-- Get Refresh Token
-- Delete Refresh Token
-- Delete Existing User Tokens
-
-### Benefits
-
-- Cleaner Services
-- Reusable Queries
-- Better Maintainability
-- Easier Testing
-- Production-ready Architecture
-CI/CD Improvements
-## CI/CD Pipeline
-
-GitHub Actions automatically performs:
-
-```text
-Git Push
-    │
-    ▼
-GitHub Actions
-    │
-    ▼
-Start PostgreSQL Service
-    │
-    ▼
-Inject Environment Variables
-    │
-    ▼
-Run Alembic Migrations
-    │
-    ▼
-Execute Pytest
-    │
-    ▼
-Generate Test Results
-```
-
-### CI Features
-
-- Automated Testing
-- PostgreSQL Service
-- Alembic Database Migrations
-- GitHub Secrets
-- GitHub Runner
-- Environment Variable Injection
 
 ## Author
 
