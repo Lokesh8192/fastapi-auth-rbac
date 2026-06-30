@@ -21,6 +21,76 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 - GitHub Actions CI with PostgreSQL and migration execution
 - Docker and Docker Compose support
 
+## Topic Notes and Definitions
+
+### 1. User Registration
+- Definition: Creating a new account for a user in the system.
+- Note: The app validates uniqueness for the username and email before creating the account.
+
+### 2. Password Confirmation and Validation
+- Definition: Ensuring the user enters the same password twice and that the password meets strength rules.
+- Note: This reduces accidental typos and improves account security.
+
+### 3. Password Hashing
+- Definition: Converting a plain-text password into a one-way encrypted form before storing it.
+- Note: The project uses Passlib with bcrypt so passwords cannot be read directly from the database.
+
+### 4. JWT Access Tokens
+- Definition: Short-lived tokens used to prove a user is authenticated for API requests.
+- Note: Access tokens are issued after login and used in the Authorization header.
+
+### 5. Refresh Tokens
+- Definition: Long-lived tokens used to obtain a new access token without requiring the user to log in again.
+- Note: Refresh tokens are stored in the database and revoked on logout.
+
+### 6. Bearer-Token Authentication
+- Definition: A standard authorization method where a token is sent in the Authorization header.
+- Note: Protected routes use the token to identify the current user.
+
+### 7. Role-Based Access Control (RBAC)
+- Definition: Restricting access based on a user's assigned role such as user or admin.
+- Note: Admin-only endpoints are guarded by a role check.
+
+### 8. Pagination and Filtering
+- Definition: Splitting large result sets into smaller pages and allowing search/filter options.
+- Note: The admin user listing supports page size, search, role, and active-status filters.
+
+### 9. SQLAlchemy ORM
+- Definition: A Python object-relational mapping layer that lets you work with database records as Python objects.
+- Note: The project uses SQLAlchemy models to represent users and refresh tokens.
+
+### 10. Repository Pattern
+- Definition: A layer that isolates database queries from business logic.
+- Note: Repositories keep data access code organized and easier to test.
+
+### 11. Service Layer
+- Definition: The business-logic layer between the API routes and database repositories.
+- Note: Services handle authentication flows like registration, login, refresh, and logout.
+
+### 12. Pydantic Schemas
+- Definition: Data validation and serialization models used for API request and response payloads.
+- Note: Schemas ensure the API receives correct input and returns consistent output.
+
+### 13. Custom Exceptions
+- Definition: Application-specific errors used to represent business-rule failures clearly.
+- Note: These exceptions are handled centrally to return consistent API responses.
+
+### 14. Alembic Migrations
+- Definition: Versioned database schema changes managed through migration scripts.
+- Note: Alembic keeps the PostgreSQL database schema aligned with the application models.
+
+### 15. Pytest and Integration Testing
+- Definition: Automated tests that validate the real API behavior end to end.
+- Note: The project includes fixtures and database cleanup to keep tests isolated.
+
+### 16. GitHub Actions CI
+- Definition: Automated workflow execution for running tests and checks on code changes.
+- Note: CI helps detect regressions whenever new code is pushed.
+
+### 17. Docker and Docker Compose
+- Definition: Container tools used to package and run the app and database together.
+- Note: Docker helps create a consistent development and deployment environment.
+
 ## Tech Stack
 
 - FastAPI
