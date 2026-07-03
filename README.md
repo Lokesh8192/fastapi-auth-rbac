@@ -291,6 +291,7 @@ Current automated coverage includes:
 | --- | --- |
 | Registration | Successful API registration and reusable registered-user fixture |
 | Login | Access-token and refresh-token issuance |
+| Login errors | Unknown user returns `404 User not found`; incorrect password returns `401 Invalid credentials` |
 | Authentication | Bearer header construction and `/auth/me` current-user lookup |
 | Token lifecycle | Successful access-token refresh and logout requests |
 | Admin authentication and RBAC | Missing-token denial (`401`), regular-user denial (`403`), admin login, bearer-header creation, and successful admin access |
@@ -313,11 +314,12 @@ Run tests with coverage:
 pytest --cov=app --cov-report=term-missing
 ```
 
-Run only authentication or admin tests:
+Run an individual test module:
 
 ```bash
 pytest -v tests/test_auth.py
 pytest -v tests/test_admin.py
+pytest -v tests/test_exceptions.py
 ```
 
 ## Logging
