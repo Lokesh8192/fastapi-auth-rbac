@@ -10,8 +10,8 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 - JWT access tokens and database-backed refresh tokens
 - Refresh-token replacement on login, access-token renewal, and logout revocation
 - Bearer-token authentication for protected endpoints
-- Role-based authorization for admin-only operations
-- Paginated user listing with username search, role filtering, and active-status filtering
+- Admin endpoint authentication (`401` without a token) and role-based authorization (`403` for non-admin users)
+- Paginated admin user listing with username search, role filtering, active-status filtering, and invalid-page handling
 - SQLAlchemy 2.0 ORM models and repository pattern
 - Service-layer business logic and dependency injection
 - Pydantic request validation and response schemas
@@ -49,11 +49,11 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 
 ### 7. Role-Based Access Control (RBAC)
 - Definition: Restricting access based on a user's assigned role such as user or admin.
-- Note: Admin-only endpoints are guarded by a role check.
+- Note: Admin-only endpoints require a valid bearer token and an admin role. Missing authentication returns `401`, while an authenticated non-admin user receives `403`.
 
 ### 8. Pagination and Filtering
 - Definition: Splitting large result sets into smaller pages and allowing search/filter options.
-- Note: The admin user listing supports page size, search, role, and active-status filters.
+- Note: The admin user listing supports page size, username search, role filtering, and active-status filtering. A page beyond the available range returns `404 Page not found`.
 
 ### 9. SQLAlchemy ORM
 - Definition: A Python object-relational mapping layer that lets you work with database records as Python objects.
@@ -293,11 +293,13 @@ Current automated coverage includes:
 | Login | Access-token and refresh-token issuance |
 | Authentication | Bearer header construction and `/auth/me` current-user lookup |
 | Token lifecycle | Successful access-token refresh and logout requests |
-| RBAC | Regular-user denial (`403`) and successful admin access |
-| User listing | Default pagination fields and response structure |
+| Admin authentication and RBAC | Missing-token denial (`401`), regular-user denial (`403`), admin login, bearer-header creation, and successful admin access |
+| User listing | Admin retrieval of users, default page `1`, default size `10`, list data, totals, total pages, and filter metadata |
 | Pagination errors | Out-of-range page returns `404` |
-| Search and filters | Username search, role filtering, and returned filter metadata |
+| Search and filters | Username search, admin-role filtering, active-user filtering, and returned filter metadata |
 | Test isolation | Dedicated PostgreSQL session and table cleanup after every test |
+
+The admin tests create admin and regular users directly in the test database because public registration always assigns the `user` role. They then verify `/admin/users` with an authenticated admin, without a token, and with a non-admin token.
 
 Run the full test suite:
 
