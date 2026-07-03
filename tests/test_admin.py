@@ -202,3 +202,61 @@ def test_filter_by_role(
         user["role"] == "admin"
         for user in users
     )
+
+def test_filter_by_role(admin_headers):
+    response = client.get(
+        "/admin/users?role=admin",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["success"] is True
+
+    users = body["data"]
+
+    for user in users:
+        assert user["role"] == "admin"
+
+def test_filter_by_is_active(admin_headers):
+
+    response = client.get(
+        "/admin/users?is_active=true",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["success"] is True
+
+    users = body["data"]
+
+    for user in users:
+        assert user["is_active"] is True
+
+def test_without_token():
+
+    response = client.get("/admin/users")
+
+    assert response.status_code == 401
+
+    body = response.json()
+
+    assert "detail" in body 
+
+def test_non_admin_access(auth_headers):
+
+    response = client.get(
+        "/admin/users",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403
+
+    body = response.json()
+
+    assert "detail" in body
