@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from app.core.auth import create_refresh_token
 
 from app.main import app
 
@@ -22,6 +23,7 @@ def test_user_not_found():
     assert body["success"] is False
     assert body["message"] == "User not found"
 
+
 def test_invalid_password(registered_user):
 
     response = client.post(
@@ -38,3 +40,39 @@ def test_invalid_password(registered_user):
 
     assert body["success"] is False
     assert body["message"] == "Invalid credentials"
+
+
+def test_invalid_refresh_token():
+    response = client.post(
+        "/auth/refresh",
+        json={
+            "refresh_token": "invalid_token"
+        }
+    )
+
+    assert response.status_code == 401
+
+    body = response.json()
+
+    assert body["detail"] == "Invalid refresh token"
+
+
+def test_refresh_token_not_found():
+
+    refresh_token = create_refresh_token(
+        {"sub": "999"}
+    )
+
+    response = client.post(
+        "/auth/refresh",
+        json={
+            "refresh_token": refresh_token,
+        },
+    )
+    assert response.status_code == 404
+
+    body = response.json()
+
+    assert body["success"] is False
+
+    assert body["message"] == "Refresh token not found"

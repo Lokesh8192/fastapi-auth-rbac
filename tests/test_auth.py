@@ -1,3 +1,4 @@
+from app.core.auth import create_access_token
 from app.models.user import User
 from tests.conftest import client
 from tests.test_database import TestingSessionLocal
@@ -54,6 +55,28 @@ def test_regular_user_cannot_access_admin_endpoint(auth_headers):
     response = client.get("/admin/users", headers=auth_headers)
 
     assert response.status_code == 403
+
+
+def test_invalid_access_token_returns_401():
+    invalid_token = create_access_token({"sub": "1"})[:-3]
+
+    response = client.get(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {invalid_token}"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_non_numeric_subject_in_token_returns_401():
+    token = create_access_token({"sub": "not-a-number"})
+
+    response = client.get(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
 
 
 def test_admin_users_respects_filters(registered_user):

@@ -285,6 +285,8 @@ The API is available at `http://127.0.0.1:8000`. Interactive OpenAPI documentati
 
 The test suite uses FastAPI's `TestClient` with a database dependency override. Fixtures create unique users, perform registration and login, build bearer headers, and truncate the `users` and `refresh_tokens` tables after each test.
 
+As of July 4, 2026, all 22 collected tests pass.
+
 Current automated coverage includes:
 
 | Area | Scenarios |
@@ -292,10 +294,10 @@ Current automated coverage includes:
 | Registration | Successful API registration and reusable registered-user fixture |
 | Login | Access-token and refresh-token issuance |
 | Login errors | Unknown user returns `404 User not found`; incorrect password returns `401 Invalid credentials` |
-| Authentication | Bearer header construction and `/auth/me` current-user lookup |
-| Token lifecycle | Successful access-token refresh and logout requests |
+| Authentication | Bearer header construction, `/auth/me` current-user lookup, malformed access-token rejection (`401`), and non-numeric token-subject rejection (`401`) |
+| Token lifecycle | Successful access-token refresh and logout requests, invalid refresh-token rejection (`401`), and valid but unregistered refresh-token rejection (`404`) |
 | Admin authentication and RBAC | Missing-token denial (`401`), regular-user denial (`403`), admin login, bearer-header creation, and successful admin access |
-| User listing | Admin retrieval of users, default page `1`, default size `10`, list data, totals, total pages, and filter metadata |
+| User listing | Admin retrieval of users, default page `1`, default size `10`, list data, totals, total pages, filter metadata, and combined admin-role filter verification |
 | Pagination errors | Out-of-range page returns `404` |
 | Search and filters | Username search, admin-role filtering, active-user filtering, and returned filter metadata |
 | Test isolation | Dedicated PostgreSQL session and table cleanup after every test |

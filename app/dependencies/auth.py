@@ -23,7 +23,15 @@ def get_current_user(
 
     user_id = payload.get("sub")
 
-    user = get_user_by_id(db, int(user_id))
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid token payload") from None
+
+    user = get_user_by_id(db, user_id_int)
 
     if not user:
         raise UserNotFoundException()

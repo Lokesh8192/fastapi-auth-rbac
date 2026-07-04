@@ -7,11 +7,13 @@ def delete_user_refresh_tokens(
     db: Session,
     user_id: int,
 ):
-    (
+    deleted_count = (
         db.query(RefreshToken)
         .filter(RefreshToken.user_id == user_id)
         .delete()
     )
+    db.commit()
+    return deleted_count
 
 
 def create_refresh_token(
