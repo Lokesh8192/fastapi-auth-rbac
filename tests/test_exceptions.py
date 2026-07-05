@@ -76,3 +76,32 @@ def test_refresh_token_not_found():
     assert body["success"] is False
 
     assert body["message"] == "Refresh token not found"
+
+
+def test_validation_error():
+    response = client.post(
+        "/auh/rwegister",
+        json={
+            "username": "lokesh",
+            "email": "lokesh@gmail.com",
+        },
+    )
+
+    assert response.status_code == 422
+
+    body = response.json()
+
+    assert "detail" in body
+
+
+def test_global_exception_handler():
+
+    response = client.get("/error")
+
+    assert response.status_code == 500
+
+    body = response.json()
+
+    assert body["success"] is False
+
+    assert body["message"] == "Internal Server Error"
