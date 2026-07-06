@@ -148,7 +148,9 @@ tests/
 |-- conftest.py
 |-- test_admin.py
 |-- test_auth.py
-`-- test_database.py
+|-- test_database.py
+|-- test_exceptions.py
+`-- test_repository.py
 ```
 
 ## API Endpoints
@@ -283,9 +285,7 @@ The API is available at `http://127.0.0.1:8000`. Interactive OpenAPI documentati
 
 ## Testing
 
-The test suite uses FastAPI's `TestClient` with a database dependency override. Fixtures create unique users, perform registration and login, build bearer headers, and truncate the `users` and `refresh_tokens` tables after each test.
-
-As of July 4, 2026, all 22 collected tests pass.
+The test suite uses FastAPI's `TestClient` with a database dependency override. Fixtures create unique users, perform registration and login, build bearer headers, and truncate the `users` and `refresh_tokens` tables after each test. Repository tests also use the dedicated test-database session directly and remove the records they create.
 
 Current automated coverage includes:
 
@@ -300,6 +300,7 @@ Current automated coverage includes:
 | User listing | Admin retrieval of users, default page `1`, default size `10`, list data, totals, total pages, filter metadata, and combined admin-role filter verification |
 | Pagination errors | Out-of-range page returns `404` |
 | Search and filters | Username search, admin-role filtering, active-user filtering, and returned filter metadata |
+| User repository | User lookup by email, username, and ID; not-found results for each lookup; user creation; and unfiltered user listing |
 | Test isolation | Dedicated PostgreSQL session and table cleanup after every test |
 
 The admin tests create admin and regular users directly in the test database because public registration always assigns the `user` role. They then verify `/admin/users` with an authenticated admin, without a token, and with a non-admin token.
@@ -322,6 +323,7 @@ Run an individual test module:
 pytest -v tests/test_auth.py
 pytest -v tests/test_admin.py
 pytest -v tests/test_exceptions.py
+pytest -v tests/test_repository.py
 ```
 
 ## Logging
