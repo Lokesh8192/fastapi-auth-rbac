@@ -18,8 +18,10 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 - Centralized custom exceptions and application logging
 - PostgreSQL schema migrations with Alembic
 - Pytest fixtures, dependency overrides, test-database cleanup, and API integration tests
+- Refresh-token repository tests for create, lookup, single-token deletion, and user-wide revocation
 - GitHub Actions CI with PostgreSQL and migration execution
 - Docker and Docker Compose support
+- Optional Python basics notes generator using `python-docx`
 
 ## Topic Notes and Definitions
 
@@ -101,6 +103,7 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 - python-jose
 - Passlib and bcrypt
 - Pytest and pytest-cov
+- python-docx
 - Docker
 - GitHub Actions
 
@@ -151,6 +154,11 @@ tests/
 |-- test_database.py
 |-- test_exceptions.py
 `-- test_repository.py
+
+build_python_basics_notes.py
+Python_Basics_Notes.docx
+docker-compose.yml
+requirements.txt
 ```
 
 ## API Endpoints
@@ -262,13 +270,29 @@ PostgreSQL
 ## Local Setup
 
 1. Create and activate a virtual environment.
+
+```bash
+python -m venv .venv
+```
+
+On Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+On macOS or Linux:
+
+```bash
+source .venv/bin/activate
+```
+
 2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Create the application and test PostgreSQL databases and configure `.env`.
 4. Run migrations:
 
 ```bash
@@ -301,6 +325,7 @@ Current automated coverage includes:
 | Pagination errors | Out-of-range page returns `404` |
 | Search and filters | Username search, admin-role filtering, active-user filtering, and returned filter metadata |
 | User repository | User lookup by email, username, and ID; not-found results for each lookup; user creation; and unfiltered user listing |
+| Refresh-token repository | Refresh-token creation, invalid-token lookup, single-token deletion, and deleting all refresh tokens for a user |
 | Test isolation | Dedicated PostgreSQL session and table cleanup after every test |
 
 The admin tests create admin and regular users directly in the test database because public registration always assigns the `user` role. They then verify `/admin/users` with an authenticated admin, without a token, and with a non-admin token.
@@ -329,6 +354,16 @@ pytest -v tests/test_repository.py
 ## Logging
 
 The application logs authentication and token events, including login attempts, successful logins, invalid credentials, refresh-token generation and validation, logout, and authentication-related database failures.
+
+## Python Basics Notes
+
+The repository includes a small utility script that generates a Word document with beginner-friendly Python notes:
+
+```bash
+python build_python_basics_notes.py
+```
+
+The script uses `python-docx` and writes `Python_Basics_Notes.docx` in the project root.
 
 ## CI/CD Pipeline
 
