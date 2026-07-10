@@ -19,9 +19,10 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 - PostgreSQL schema migrations with Alembic
 - Pytest fixtures, dependency overrides, test-database cleanup, and API integration tests
 - Refresh-token repository tests for create, lookup, single-token deletion, and user-wide revocation
+- User-service unit tests for successful creation, duplicate-user checks, and rollback behavior
 - GitHub Actions CI with PostgreSQL and migration execution
 - Docker and Docker Compose support
-- Optional Python basics notes generator using `python-docx`
+- Utility scripts for demo user creation, focused exception-test runs, and Python basics notes generation
 
 ## Topic Notes and Definitions
 
@@ -110,7 +111,12 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 ## Project Structure
 
 ```text
+.github/
+`-- workflows/
+    `-- ci.yml
+
 app/
+|-- __init__.py
 |-- api/
 |   |-- admin.py
 |   `-- auth.py
@@ -130,6 +136,7 @@ app/
 |   |-- refresh_token.py
 |   `-- user.py
 |-- repositories/
+|   |-- __init__.py
 |   |-- refresh_token_repository.py
 |   `-- user_repository.py
 |-- schemas/
@@ -143,7 +150,11 @@ app/
 `-- main.py
 
 alembic/
+|-- README
 |-- versions/
+|   |-- 118ca43dea66_fix_missing_phone_number.py
+|   |-- 7664cd9d032d_initial_migration.py
+|   `-- 9f748bb36038_add_phone_number.py
 |-- env.py
 `-- script.py.mako
 
@@ -153,12 +164,23 @@ tests/
 |-- test_auth.py
 |-- test_database.py
 |-- test_exceptions.py
-`-- test_repository.py
+|-- test_repository.py
+`-- test_user_service.py
 
+.dockerignore
+.gitignore
+Dockerfile
+alembic.ini
 build_python_basics_notes.py
-Python_Basics_Notes.docx
+create_users.py
 docker-compose.yml
+pytest.ini
 requirements.txt
+verify_exceptions.py
+
+Python_Basics_Notes.docx
+Lokeswara Reddy Resume - Updated.docx
+Lokeswara Reddy Resume - working.docx
 ```
 
 ## API Endpoints
@@ -293,6 +315,17 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+3. Create a `.env` file with the settings consumed by `app/core/config.py`:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/fastapi_auth_db
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/fastapi_auth_test_db
+SECRET_KEY=change-me
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+```
+
 4. Run migrations:
 
 ```bash
@@ -324,8 +357,10 @@ Current automated coverage includes:
 | User listing | Admin retrieval of users, default page `1`, default size `10`, list data, totals, total pages, filter metadata, and combined admin-role filter verification |
 | Pagination errors | Out-of-range page returns `404` |
 | Search and filters | Username search, admin-role filtering, active-user filtering, and returned filter metadata |
+| User service | Successful user creation, duplicate username rejection, duplicate email rejection, password hashing, and rollback on repository errors |
 | User repository | User lookup by email, username, and ID; not-found results for each lookup; user creation; and unfiltered user listing |
 | Refresh-token repository | Refresh-token creation, invalid-token lookup, single-token deletion, and deleting all refresh tokens for a user |
+| Exception handling | Custom user/auth/refresh-token errors, validation errors, and global `500` error responses |
 | Test isolation | Dedicated PostgreSQL session and table cleanup after every test |
 
 The admin tests create admin and regular users directly in the test database because public registration always assigns the `user` role. They then verify `/admin/users` with an authenticated admin, without a token, and with a non-admin token.
@@ -349,21 +384,45 @@ pytest -v tests/test_auth.py
 pytest -v tests/test_admin.py
 pytest -v tests/test_exceptions.py
 pytest -v tests/test_repository.py
+pytest -v tests/test_user_service.py
 ```
 
 ## Logging
 
 The application logs authentication and token events, including login attempts, successful logins, invalid credentials, refresh-token generation and validation, logout, and authentication-related database failures.
 
-## Python Basics Notes
+## Utility Scripts and Documents
 
-The repository includes a small utility script that generates a Word document with beginner-friendly Python notes:
+The repository includes small utility scripts and document artifacts:
+
+| File | Purpose |
+| --- | --- |
+| `build_python_basics_notes.py` | Generates beginner-friendly Python notes as a Word document |
+| `Python_Basics_Notes.docx` | Generated Python basics notes document |
+| `create_users.py` | Seeds demo users directly through the SQLAlchemy session |
+| `verify_exceptions.py` | Runs `tests/test_exceptions.py` with verbose pytest output |
+| `Lokeswara Reddy Resume - Updated.docx` | Resume document artifact tracked in the workspace |
+| `Lokeswara Reddy Resume - working.docx` | Working resume document artifact tracked in the workspace |
+
+Generate the Python basics notes:
 
 ```bash
 python build_python_basics_notes.py
 ```
 
 The script uses `python-docx` and writes `Python_Basics_Notes.docx` in the project root.
+
+Seed demo users:
+
+```bash
+python create_users.py
+```
+
+Run the focused exception checks:
+
+```bash
+python verify_exceptions.py
+```
 
 ## CI/CD Pipeline
 
