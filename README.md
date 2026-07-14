@@ -15,13 +15,14 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 - SQLAlchemy 2.0 ORM models and repository pattern
 - Service-layer business logic and dependency injection
 - Pydantic request validation and response schemas
-- Centralized custom exceptions and application logging
+- Centralized exception handling that preserves HTTP errors and standardizes unexpected failures
 - PostgreSQL schema migrations with Alembic
 - Pytest fixtures, dependency overrides, test-database cleanup, and API integration tests
 - Refresh-token repository tests for create, lookup, single-token deletion, and user-wide revocation
 - User-service unit tests for successful creation, duplicate-user checks, and rollback behavior
 - GitHub Actions CI with PostgreSQL and migration execution
-- Docker and Docker Compose support
+- Docker and Docker Compose support with a lean build context
+- Docker startup checks PostgreSQL health and applies Alembic migrations before serving the API
 - Utility scripts for demo user creation, focused exception-test runs, and Python basics notes generation
 
 ## Topic Notes and Definitions
@@ -314,6 +315,8 @@ source .venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
+The Docker image uses Python 3.13. For local development, use a compatible Python 3.13 environment.
+
 
 3. Create a `.env` file with the settings consumed by `app/core/config.py`:
 
@@ -342,7 +345,7 @@ The API is available at `http://127.0.0.1:8000`. Interactive OpenAPI documentati
 
 ## Testing
 
-The test suite uses FastAPI's `TestClient` with a database dependency override. Fixtures create unique users, perform registration and login, build bearer headers, and truncate the `users` and `refresh_tokens` tables after each test. Repository tests also use the dedicated test-database session directly and remove the records they create.
+The test suite uses FastAPI's `TestClient` with a database dependency override. At the start of a test session it creates the SQLAlchemy schema in the dedicated test database, so a newly created test database has the required tables. Fixtures create unique users, perform registration and login, build bearer headers, and truncate the `users` and `refresh_tokens` tables after each test. Repository tests also use the dedicated test-database session directly and remove the records they create.
 
 Current automated coverage includes:
 
@@ -361,7 +364,7 @@ Current automated coverage includes:
 | User repository | User lookup by email, username, and ID; not-found results for each lookup; user creation; and unfiltered user listing |
 | Refresh-token repository | Refresh-token creation, invalid-token lookup, single-token deletion, and deleting all refresh tokens for a user |
 | Exception handling | Custom user/auth/refresh-token errors, validation errors, and global `500` error responses |
-| Test isolation | Dedicated PostgreSQL session and table cleanup after every test |
+| Test isolation | Test-session schema creation, dedicated PostgreSQL session, and table cleanup after every test |
 
 The admin tests create admin and regular users directly in the test database because public registration always assigns the `user` role. They then verify `/admin/users` with an authenticated admin, without a token, and with a non-admin token.
 
@@ -442,6 +445,8 @@ Build and start the application stack:
 ```bash
 docker compose up --build
 ```
+Compose waits until PostgreSQL is healthy, runs `alembic upgrade head`, and then starts Uvicorn. Inside Docker, the application connects to PostgreSQL using the `db` service hostname; this overrides the local `DATABASE_URL` from `.env`. The remaining settings, including `TEST_DATABASE_URL` and JWT configuration, are loaded from `.env`. The Docker build context excludes local environments, test output, IDE settings, and document files.
+
 
 Common commands:
 

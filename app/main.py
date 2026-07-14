@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import Response
 
@@ -38,6 +38,8 @@ app = FastAPI(
 async def catch_unhandled_exceptions(request: Request, call_next):
     try:
         return await call_next(request)
+    except HTTPException:
+        raise
     except Exception as exc:
         return await global_exception_handler(request, exc)
 
