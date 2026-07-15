@@ -20,6 +20,7 @@ A production-oriented FastAPI backend for user authentication, refresh-token ses
 - Pytest fixtures, dependency overrides, test-database cleanup, and API integration tests
 - Refresh-token repository tests for create, lookup, single-token deletion, and user-wide revocation
 - User-service unit tests for successful creation, duplicate-user checks, and rollback behavior
+- Auth-service unit tests for login, refresh-token validation, logout, and database-error rollback behavior
 - GitHub Actions CI with PostgreSQL and migration execution
 - Docker and Docker Compose support with a lean build context
 - Docker startup checks PostgreSQL health and applies Alembic migrations before serving the API
@@ -163,6 +164,7 @@ tests/
 |-- conftest.py
 |-- test_admin.py
 |-- test_auth.py
+|-- test_auth_service.py
 |-- test_database.py
 |-- test_exceptions.py
 |-- test_repository.py
@@ -193,8 +195,8 @@ Lokeswara Reddy Resume - working.docx
 | `POST` | `/auth/register` | Public | Register a user with the default `user` role |
 | `POST` | `/auth/login` | Public | Authenticate and issue access and refresh tokens |
 | `GET` | `/auth/me` | Bearer token | Return the authenticated user |
-| `POST` | `/auth/refresh` | Refresh token | Issue a new access token |
-| `POST` | `/auth/logout` | Refresh token | Revoke the stored refresh token |
+| `POST` | `/auth/refresh` | Refresh token in JSON body | Issue a new access token |
+| `POST` | `/auth/logout` | Refresh token in JSON body | Revoke the stored refresh token |
 
 ### Admin
 
@@ -217,6 +219,14 @@ Example:
 ```http
 GET /admin/users?search=lokesh&role=admin&is_active=true&page=1&size=10
 Authorization: Bearer <access-token>
+```
+
+Refresh and logout requests accept this JSON body:
+
+```json
+{
+  "refresh_token": "<refresh-token>"
+}
 ```
 
 ## Response Format
@@ -248,6 +258,8 @@ Paginated admin responses include paging information and the applied filters:
   "data": []
 }
 ```
+
+A successful login returns the authenticated user, an access token, a refresh token, and `token_type` set to `bearer` inside `data`.
 
 Requests for a page beyond the available range return `404 Page not found`. Authenticated non-admin users receive `403 Admin access required` from admin endpoints.
 
@@ -361,6 +373,7 @@ Current automated coverage includes:
 | Pagination errors | Out-of-range page returns `404` |
 | Search and filters | Username search, admin-role filtering, active-user filtering, and returned filter metadata |
 | User service | Successful user creation, duplicate username rejection, duplicate email rejection, password hashing, and rollback on repository errors |
+| Auth service | Login success and failures, refresh-token validation, logout, and rollback after refresh-token persistence errors |
 | User repository | User lookup by email, username, and ID; not-found results for each lookup; user creation; and unfiltered user listing |
 | Refresh-token repository | Refresh-token creation, invalid-token lookup, single-token deletion, and deleting all refresh tokens for a user |
 | Exception handling | Custom user/auth/refresh-token errors, validation errors, and global `500` error responses |
@@ -384,6 +397,7 @@ Run an individual test module:
 
 ```bash
 pytest -v tests/test_auth.py
+pytest -v tests/test_auth_service.py
 pytest -v tests/test_admin.py
 pytest -v tests/test_exceptions.py
 pytest -v tests/test_repository.py
@@ -436,7 +450,7 @@ Checkout -> Set up Python -> Install dependencies -> Start PostgreSQL
          -> Run Alembic migrations -> Execute Pytest
 ```
 
-The workflow uses a PostgreSQL 17 service and injects database and authentication settings through environment variables and GitHub secrets.
+The workflow uses a PostgreSQL 17 service, Python 3.14, and GitHub secrets for the JWT settings.
 
 ## Docker
 
@@ -445,7 +459,7 @@ Build and start the application stack:
 ```bash
 docker compose up --build
 ```
-Compose waits until PostgreSQL is healthy, runs `alembic upgrade head`, and then starts Uvicorn. Inside Docker, the application connects to PostgreSQL using the `db` service hostname; this overrides the local `DATABASE_URL` from `.env`. The remaining settings, including `TEST_DATABASE_URL` and JWT configuration, are loaded from `.env`. The Docker build context excludes local environments, test output, IDE settings, and document files.
+Compose waits until PostgreSQL is healthy, runs `alembic upgrade head`, and then starts Uvicorn. Inside Docker, the application connects to PostgreSQL using the `db` service hostname; this overrides the local `DATABASE_URL` from `.env`. JWT configuration is loaded from `.env`.
 
 
 Common commands:
