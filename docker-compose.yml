@@ -27,7 +27,8 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/fastapi_auth_db
+             DATABASE_URL: postgresql://postgres:postgres@db:5432/fastapi_auth_db
+             TEST_DATABASE_URL: postgresql://postgres:postgres@db:5432/fastapi_test_db
     command: >
       sh -c "alembic upgrade head &&
       uvicorn app.main:app --host 0.0.0.0 --port 8000"
