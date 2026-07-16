@@ -3,9 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import Response
-
+from app.core.config import settings
 from app.schemas.user import UserCreate
-
+from app.api.health import router as health_router
 from app.api.admin import router as admin_router
 from app.api.auth import router as auth_router
 from app.core.exception_handler import (
@@ -28,8 +28,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="FastAPI Authentication and RBAC",
-    version="1.0.0",
+    title=settings.PROJECT_NAME,
+    version=settings.API_VERSION,
     lifespan=lifespan,
 )
 
@@ -46,6 +46,7 @@ async def catch_unhandled_exceptions(request: Request, call_next):
 
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(health_router)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(
     UserNotFoundException,
