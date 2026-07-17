@@ -461,6 +461,16 @@ docker compose up --build
 ```
 Compose waits until PostgreSQL is healthy, runs `alembic upgrade head`, and then starts Uvicorn. Inside Docker, the application connects to PostgreSQL using the `db` service hostname; this overrides the local `DATABASE_URL` from `.env`. JWT configuration is loaded from `.env`.
 
+### Render deployment
+
+The image runs `alembic upgrade head` before Gunicorn starts. This keeps the production PostgreSQL schema aligned with the SQLAlchemy models, including the `users.phone_number` column required by the registration query.
+
+After changing a migration or model, redeploy the service so the startup migration runs. If Render has a custom **Start Command**, either remove it so Docker uses the image command or run migrations before Gunicorn:
+
+```bash
+alembic upgrade head && exec gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000
+```
+
 
 Common commands:
 
